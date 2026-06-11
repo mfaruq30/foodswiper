@@ -1,0 +1,66 @@
+# Munch — Recommendation Algorithm
+
+> Phase 0: design contract only. Implementation lands in Phase 2 (layers 1–3)
+> and Phase 5 (layers 4–5). **Every** algorithm change after that appends an
+> entry to the iteration log below with before/after metrics — that paper
+> trail is part of the deliverable.
+
+## Layered design (spec §7, amended per DECISIONS.md D-007…D-010)
+
+| Layer | What | When it works |
+|---|---|---|
+| 1 | Hard filters: metro, open-now (3-state), dietary, price ceiling (permissive on imputed), range | Always; pure functions, <50ms |
+| 2 | Heuristic weighted-sum scorer; weights in config, never inline | From swipe #1 (anchors drive cold start) |
+| 3 | Offline eval harness on synthetic users — **plumbing validation, not lift evidence** (D-007) | Phase 2 onward |
+| 4 | LightGBM LambdaMART (group = served deck, label_gain [0,1,5], unseen excluded, position logged — D-008) | Gated: ≥50k real swipes / ≥5k mixed-label decks |
+| 5 | Reason text: templated default; Haiku pre-generated + cached, off the serve path (D-004) | Phase 5, feature-flagged |
+
+Deck assembly on top of scoring: Thompson sampling on `internal_score`,
+2/10 exploration slots, ≤3 cards per cuisine per deck, `explore` flag logged
+per impression (D-009).
+
+## Cold start
+
+Anchor restaurants → hand-built, versioned cuisine adjacency map over ~30
+canonical cuisine nodes (raw OSM tags normalized at seed time), three weight
+tiers (1.0 self / 0.6 near / 0.3 related). Anchors also initialize price and
+geography priors. No embeddings in v1 — nothing to train them from; upgrade
+path is swipe-derived co-preference (PMI), data-gated.
+
+## internal_score
+
+Beta posterior mean, prior strength ≈20 effective impressions centered on the
+live global right-swipe rate (recomputed weekly); conversions add
+pseudo-successes; ~90-day half-life decay. Surfaced in UI as the
+"N% of people who like what you like, liked this" number. 100% Munch-owned
+data; never a scraped third-party rating.
+
+## Evaluation protocol
+
+- Metrics: Precision@k, Recall@k, NDCG@k, MRR, hit-rate@k for k ∈ {1,3,5}.
+- Every run reports against a **random-ranker floor** and an **oracle ceiling**
+  (direct access to simulator latents); models are judged by bracket position.
+- Simulator includes latent signals NOT in the feature set + 10–20% label
+  noise + preference drift; assumptions documented alongside the simulator code.
+- Champion/challenger: a challenger must beat the champion on NDCG@5 by a
+  configured margin to pass *plumbing* regression. **Promotion to production
+  champion additionally requires real-data evidence** (interleaving/A-B on
+  logged swipes). The heuristic is the designated champion until the Layer-4
+  data gate is met.
+- Reproducible entry point: `python -m evalharness.run` (prints the metrics
+  table and appends it here).
+
+## Prior-art sources
+
+(Per spec §7.7 — permissive licenses only, approach over copy-paste. Populated
+as references are actually used, with URL + license.)
+
+| Source | License | Used for |
+|---|---|---|
+| _none yet_ | | |
+
+## Iteration log
+
+| Date | Change | NDCG@5 before → after | Notes |
+|---|---|---|---|
+| _Phase 2 opens this log_ | | | |
