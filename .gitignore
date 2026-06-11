@@ -34,3 +34,7 @@ node_modules/
 # OS noise
 .DS_Store
 Thumbs.db
+
+# Seed pipeline artifacts (downloads + generated SQL)
+backend/supabase/seed/.seed_cache/
+backend/supabase/seed/seed_out/

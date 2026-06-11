@@ -1,0 +1,48 @@
+# Munch open-data seed pipeline — packaging + toolchain.
+# Runs offline at build time (and weekly in CI), never per request (spec §6.4).
+
+[project]
+name = "munch-seed"
+version = "0.1.0"
+description = "Seeds NYC + Boston restaurants from Geofabrik OSM extracts and city open-data portals into Postgres."
+requires-python = ">=3.12"
+dependencies = [
+    "osmium>=4.0",        # pyosmium: streaming PBF reader
+    "httpx>=0.28",        # Socrata / CKAN / Geofabrik downloads
+    "rapidfuzz>=3.9",     # name similarity for OSM <-> inspection matching
+    "psycopg[binary]>=3.2", # direct loader when SUPABASE_DB_URL is set
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["munch_seed"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+# pyosmium ships no type stubs; its handler API is dynamic by nature.
+[[tool.mypy.overrides]]
+module = "osmium.*"
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --cov=munch_seed --cov-report=term-missing"

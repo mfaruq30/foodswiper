@@ -42,20 +42,24 @@ skip() {
   fi
 }
 
-# --- Python: recommendation service (backend/reco) ---------------------------
-# The interpreter is pinned to 3.12 by backend/reco/.python-version (matching
-# CI and the production Dockerfile); `uv run` resolves it and syncs the venv on
-# demand, so a fresh clone needs no manual setup step.
+# --- Python projects (backend/reco, backend/supabase/seed) -------------------
+# Each project pins Python 3.12 via its .python-version (matching CI and the
+# production Dockerfile); `uv run` resolves the interpreter and syncs the venv
+# on demand, so a fresh clone needs no manual setup step.
+PYTHON_PROJECTS=(backend/reco backend/supabase/seed)
 if command -v uv >/dev/null 2>&1; then
   PY=(uv run --extra dev --)
-  if [[ "$TESTS_ONLY" == "0" ]]; then
-    run "python: ruff lint"         backend/reco "${PY[@]}" ruff check .
-    run "python: ruff format"       backend/reco "${PY[@]}" ruff format --check .
-    run "python: mypy --strict"     backend/reco "${PY[@]}" mypy .
-  fi
-  run   "python: pytest"            backend/reco "${PY[@]}" pytest
+  for project in "${PYTHON_PROJECTS[@]}"; do
+    label="python(${project##*/})"
+    if [[ "$TESTS_ONLY" == "0" ]]; then
+      run "$label: ruff lint"       "$project" "${PY[@]}" ruff check .
+      run "$label: ruff format"     "$project" "${PY[@]}" ruff format --check .
+      run "$label: mypy --strict"   "$project" "${PY[@]}" mypy .
+    fi
+    run   "$label: pytest"          "$project" "${PY[@]}" pytest
+  done
 else
-  skip "python: reco service" "uv not installed (https://docs.astral.sh/uv/)"
+  skip "python projects" "uv not installed (https://docs.astral.sh/uv/)"
 fi
 
 # --- TypeScript: Supabase edge functions (backend/supabase/functions) --------
