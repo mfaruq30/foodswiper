@@ -1,0 +1,36 @@
+# pgTAP RLS tests against the local Supabase stack (Docker on the Linux runner).
+#
+# Why a separate workflow from verify.yml: spinning the Supabase containers
+# adds minutes and is only relevant when the database layer changes — the
+# path filter keeps it out of every commit's critical path. The dev machine
+# has no Docker (RUNBOOK), so this lane is where RLS tests are enforced.
+name: db-tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/supabase/**"
+      - ".github/workflows/db-tests.yml"
+  pull_request:
+    paths:
+      - "backend/supabase/**"
+      - ".github/workflows/db-tests.yml"
+
+jobs:
+  pgtap:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Start local database (applies migrations)
+        working-directory: backend
+        run: supabase db start
+
+      - name: Run pgTAP tests
+        working-directory: backend
+        run: supabase test db

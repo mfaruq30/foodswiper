@@ -29,10 +29,37 @@ never holds a real value).
 
 ## Seed / re-sync a city
 
-_Phase 1._ `make seed` locally; weekly `resync.yml` in CI. Safety rails
-(already encoded in the workflow comments): pg_dump artifact before writes,
-idempotent upserts, tombstones not deletes, persisted match decisions,
-keepalive against the 7-day free-tier pause (D-006).
+```sh
+cd backend/supabase/seed
+uv run -- python -m munch_seed.run                 # both metros
+uv run -- python -m munch_seed.run --metro boston  # one metro
+```
+
+Without `SUPABASE_DB_URL` set, the run writes ordered SQL chunks to
+`seed_out/` (apply via the Supabase MCP or `psql`); with it, it loads
+directly. Downloads cache in `.seed_cache/` (~760 MB for both extracts).
+The run fails non-zero if any metro yields < 500 venues — that means a
+source broke, not that the city shrank.
+
+Safety rails encoded in the pipeline + resync.yml: idempotent upserts on
+(osm_type, osm_id); tombstones (`is_active=false`) never deletes; the
+tombstone step never touches `source='user'` rows; match decisions persist in
+`source_matches` (manual corrections win over re-runs); pg_dump artifact
+before CI writes; keepalive against the 7-day free-tier pause (D-006).
+
+## Database tests (RLS)
+
+pgTAP suite: [backend/supabase/tests/001_rls_test.sql](../backend/supabase/tests/001_rls_test.sql).
+Requires Docker (not on the dev machine — runs in the `db-tests` CI lane):
+
+```sh
+cd backend
+supabase db start   # local Postgres + migrations
+supabase test db    # pg_prove over supabase/tests/*.sql
+```
+
+Adding a table without updating the RLS test fails the suite — that is the
+tripwire working (D-012), not a flaky test.
 
 ## Known operational landmines (verified at kickoff)
 

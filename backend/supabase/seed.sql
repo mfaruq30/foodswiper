@@ -1,0 +1,6 @@
+-- Local-stack seed: intentionally empty.
+--
+-- config.toml's [db.seed] points here for `supabase db reset/start`. Real
+-- venue data is produced by the munch_seed pipeline (backend/supabase/seed/)
+-- against the hosted project — pgTAP tests create their own fixtures and must
+-- not depend on seeded data, so the local stack starts clean on purpose.
