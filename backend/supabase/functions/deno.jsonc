@@ -1,0 +1,21 @@
+{
+  // Deno configuration for all Munch edge functions (Phase 3 adds the
+  // functions themselves; Phase 0 wires lint/fmt/test so the toolchain is
+  // enforced from the first commit).
+  "lint": {
+    "rules": {
+      "tags": ["recommended"],
+      // The spec bans `any` outright (§6.2) — make it a lint error, not a vibe.
+      "include": ["no-explicit-any"]
+    }
+  },
+  "fmt": {
+    "lineWidth": 100,
+    "indentWidth": 2,
+    "semiColons": true,
+    "singleQuote": false
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@^1.0.6"
+  }
+}
