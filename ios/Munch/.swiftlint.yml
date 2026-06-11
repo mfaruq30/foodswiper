@@ -1,7 +1,8 @@
-# SwiftLint configuration — enforced on Linux CI; experimental on Windows.
+# SwiftLint configuration — enforced on Linux CI (pinned 0.63.3 in verify.yml).
 #
-# Windows caveats (SwiftLint 0.64+): no '?[]' glob characters in paths, and
-# linted files must be LF — both guaranteed by plain dir paths + .gitattributes.
+# Optional local use on Windows requires 0.64+ (experimental) with two caveats:
+# no '?[]' glob characters in paths, and linted files must be LF — both already
+# guaranteed here by plain dir paths + .gitattributes.
 included:
   - Munch
   - Packages/MunchKit/Sources

@@ -34,6 +34,11 @@ targets:
       path: Munch/Resources/Info.plist
       properties:
         UILaunchScreen: {}
+        # Without these, XcodeGen hardcodes 1.0/1 into the generated plist and
+        # the MARKETING_VERSION settings above are silently inert — version
+        # bumps would never reach the shipped binary (TestFlight trap).
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         # Honest, user-facing copy — Apple reviewers read this string (spec §8.4).
         NSLocationWhenInUseUsageDescription: >-
           Munch uses your location to find restaurants near you.
