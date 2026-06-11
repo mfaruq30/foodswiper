@@ -10,7 +10,8 @@
 begin;
 create extension if not exists pgtap with schema extensions;
 
-select plan(24);
+-- 17 structural (12 RLS + 5 policy-shape) + 9 behavioral.
+select plan(26);
 
 -- ---------------------------------------------------------------------------
 -- (1) Structural: RLS enabled on all 12 tables.

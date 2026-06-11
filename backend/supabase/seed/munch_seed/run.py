@@ -23,6 +23,11 @@ from .osm_extract import extract_pois
 # The spec's lower bound; below this the metro's data path is broken.
 MIN_VENUES_PER_METRO = 500
 
+# Both cities publish thousands of establishment records; near-zero always
+# means the fetcher broke (e.g. a renamed field dropping every row — which
+# happened on the first real Boston run), never that the city emptied out.
+MIN_INSPECTION_RECORDS = 100
+
 
 def _download_pbf(metro: str, cache_dir: Path) -> Path:
     """Fetch the Geofabrik extract unless a cached copy exists.
@@ -50,8 +55,8 @@ def _download_pbf(metro: str, cache_dir: Path) -> Path:
     return target
 
 
-def seed_metro(metro: str, cache_dir: Path, out_dir: Path, db_url: str | None) -> int:
-    """Run the full pipeline for one metro; returns the venue count."""
+def seed_metro(metro: str, cache_dir: Path, out_dir: Path, db_url: str | None) -> tuple[int, int]:
+    """Run the full pipeline for one metro; returns (venues, inspection records)."""
     run_started_at = datetime.now(UTC).isoformat()
 
     pbf = _download_pbf(metro, cache_dir)
@@ -80,7 +85,7 @@ def seed_metro(metro: str, cache_dir: Path, out_dir: Path, db_url: str | None) -
 
         paths = write_sql_chunks(venues, match_rows, metro, run_started_at, out_dir)
         print(f"[{metro}] wrote {len(paths)} SQL files to {out_dir}")
-    return len(venues)
+    return len(venues), len(inspections)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -95,11 +100,19 @@ def main(argv: list[str] | None = None) -> int:
 
     failed = False
     for metro in metros:
-        count = seed_metro(metro, args.cache_dir, args.out_dir, db_url)
-        if count < MIN_VENUES_PER_METRO:
+        venues, inspections = seed_metro(metro, args.cache_dir, args.out_dir, db_url)
+        if venues < MIN_VENUES_PER_METRO:
             print(
-                f"[{metro}] ERROR: only {count} venues (< {MIN_VENUES_PER_METRO}); "
+                f"[{metro}] ERROR: only {venues} venues (< {MIN_VENUES_PER_METRO}); "
                 "a data source is likely broken",
+                file=sys.stderr,
+            )
+            failed = True
+        if inspections < MIN_INSPECTION_RECORDS:
+            print(
+                f"[{metro}] ERROR: only {inspections} inspection records "
+                f"(< {MIN_INSPECTION_RECORDS}); the city fetcher is broken — venues "
+                "were emitted without enrichment, review before loading",
                 file=sys.stderr,
             )
             failed = True

@@ -117,12 +117,21 @@ def fetch_boston(client: httpx.Client | None = None) -> list[InspectionRecord]:
 
 
 def _boston_record(row: dict[str, object]) -> InspectionRecord | None:
-    license_no = str(row.get("licenseno") or "").strip()
+    # Verified live field set (2026-06-11): _id, businessname, dbaname,
+    # address, city, state, zip, licstatus, licensecat, descript,
+    # license_add_dt_tm, dayphn_cleaned, property_id, latitude, longitude.
+    # There is NO license-number column, and `_id` renumbers on re-upload, so
+    # the stable-enough ref is property + license category + name slug —
+    # multiple licenses can share a property (food halls, per-floor cafes).
+    if str(row.get("licstatus") or "").strip().lower() != "active":
+        return None
+    property_id = str(row.get("property_id") or "").strip()
+    licensecat = str(row.get("licensecat") or "").strip()
     # Boston splits identity across businessname/dbaname; prefer the DBA the
     # public actually sees, falling back to the legal name.
     name = str(row.get("dbaname") or row.get("businessname") or "").strip()
     lat_raw, lon_raw = row.get("latitude"), row.get("longitude")
-    if not (license_no and name and lat_raw and lon_raw):
+    if not (property_id and name and lat_raw and lon_raw):
         return None
     try:
         lat_f, lon_f = float(str(lat_raw)), float(str(lon_raw))
@@ -130,12 +139,13 @@ def _boston_record(row: dict[str, object]) -> InspectionRecord | None:
         return None
     if lat_f == 0.0 and lon_f == 0.0:
         return None
+    name_slug = "".join(ch for ch in name.lower() if ch.isalnum())[:40]
     return InspectionRecord(
         source="boston_open_data",
-        ref=license_no,
+        ref=f"{property_id}:{licensecat}:{name_slug}",
         name=name,
         lat=lat_f,
         lon=lon_f,
         cuisine_description=None,  # Boston's dataset has no cuisine field (D-011)
-        last_seen=str(row.get("issdttm") or "") or None,
+        last_seen=str(row.get("license_add_dt_tm") or "") or None,
     )
