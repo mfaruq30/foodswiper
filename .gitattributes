@@ -1,0 +1,17 @@
+# LF everywhere, enforced from the first commit.
+# Why: this repo is authored on Windows but verified on macOS/Linux CI.
+# CRLF breaks shell scripts on macOS runners, and SwiftLint's experimental
+# Windows support requires Unix line endings in every linted file.
+* text=auto eol=lf
+*.sh text eol=lf
+*.swift text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.p8 binary
