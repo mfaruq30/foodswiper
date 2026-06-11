@@ -185,6 +185,30 @@ Phase 6 (alcohol-venue exposure is the deciding question).
 confuses tooling, IDE resolution, and readers. Pure naming-hygiene deviation;
 the spec's contract (reproducible CLI run + metrics table) is unchanged.
 
+## D-017 — Grant posture pinned explicitly in migrations
+
+**Decision:** Migration `20260611120006_grants` explicitly grants
+table/sequence/routine access to `anon`/`authenticated`/`service_role` and
+pins matching default privileges, instead of relying on Supabase's implicit
+default-privilege setup.
+**Why:** The pgTAP suite caught the local CLI stack applying migrations under
+a role whose objects got no automatic grants — local and hosted diverged.
+Grants are the *exposure* layer; RLS remains the *security* boundary, and the
+broad grants are safe precisely because of D-012 (RLS on every table at
+creation; deny-all on service-only tables).
+**Replaces:** Implicit reliance on platform default privileges.
+
+## D-018 — Boston inspection ref is a composite (no license number exists)
+
+**Decision:** `source_matches.inspection_ref` for Boston rows is
+`property_id:licensecat:nameslug`.
+**Why:** Verified live (2026-06-11): the Active Food Establishment Licenses
+dataset has no license-number column, and CKAN's `_id` renumbers on
+re-upload. Multiple licenses share one property (food halls, per-floor
+cafes), so property id alone is not unique. The composite is stable across
+re-uploads as long as the venue keeps its name and category — acceptable for
+an enrichment join, revisit if Boston restores a license-number field.
+
 ## D-016 — `web/` directory added to the spec §3 layout
 
 **Decision:** A top-level `web/` directory (GitHub Pages) is added to the
