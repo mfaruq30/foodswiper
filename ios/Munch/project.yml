@@ -1,0 +1,48 @@
+# XcodeGen specification — the committed source of truth for the Xcode project.
+#
+# Why: this repo is authored on Windows, where Xcode cannot run. The
+# .xcodeproj is generated in CI (`xcodegen generate`) and git-ignored, so the
+# project file can never drift from this spec (docs/DECISIONS.md D-001).
+name: Munch
+
+options:
+  bundleIdPrefix: com.munch
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    # FUTURE(Phase 6): DEVELOPMENT_TEAM + manual signing config for archive/TestFlight.
+
+packages:
+  MunchKit:
+    path: Packages/MunchKit
+
+targets:
+  Munch:
+    type: application
+    platform: iOS
+    sources:
+      - Munch
+    dependencies:
+      - package: MunchKit
+    info:
+      path: Munch/Resources/Info.plist
+      properties:
+        UILaunchScreen: {}
+        # Honest, user-facing copy — Apple reviewers read this string (spec §8.4).
+        NSLocationWhenInUseUsageDescription: >-
+          Munch uses your location to find restaurants near you.
+    settings:
+      base:
+        # FUTURE(Phase 6): confirm final bundle id against the App Store Connect record.
+        PRODUCT_BUNDLE_IDENTIFIER: com.munch.app
+        TARGETED_DEVICE_FAMILY: "1" # iPhone only for v1
+
+  # FUTURE(Phase 4): MunchTests app-target test bundle (view models, coordinator).
+  # Until app features exist, MunchKit's `swift test` suite is the real test gate —
+  # an empty host-app test bundle here would be scaffold theater.

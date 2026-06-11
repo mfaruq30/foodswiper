@@ -1,0 +1,22 @@
+# SwiftLint configuration — enforced on Linux CI; experimental on Windows.
+#
+# Windows caveats (SwiftLint 0.64+): no '?[]' glob characters in paths, and
+# linted files must be LF — both guaranteed by plain dir paths + .gitattributes.
+included:
+  - Munch
+  - Packages/MunchKit/Sources
+  - Packages/MunchKit/Tests
+
+excluded:
+  - Packages/MunchKit/.build
+
+opt_in_rules:
+  - empty_count # `isEmpty` over `count == 0` — intent plus O(1)
+  - sorted_imports
+
+line_length:
+  warning: 120
+  error: 160
+
+identifier_name:
+  min_length: 2 # allow conventional short names like `id`, `dx`

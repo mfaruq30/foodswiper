@@ -1,0 +1,6 @@
+# SwiftFormat configuration (nicklockwood/SwiftFormat).
+# Kept deliberately close to defaults: the value is consistency, not cleverness.
+--swiftversion 5.10
+--maxwidth 120
+--indent 4
+--exclude Packages/MunchKit/.build
