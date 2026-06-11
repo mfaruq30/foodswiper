@@ -1,0 +1,50 @@
+# Munch recommendation service — packaging + toolchain configuration.
+# Tooling is wired in Phase 0 and stays green thereafter (spec §2).
+
+[project]
+name = "munch-reco"
+version = "0.1.0"
+description = "Munch recommendation service: hard filters, heuristic scorer, learned ranker, and the offline eval harness."
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115",
+    "pydantic>=2.7",
+    "uvicorn[standard]>=0.30",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.8",
+    "mypy>=1.13",
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "httpx>=0.28", # transport for FastAPI's TestClient
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app", "evalharness"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+# Why these rule sets: E/F are table stakes; I keeps import diffs clean;
+# UP enforces modern 3.12 syntax; B catches real bug patterns (mutable
+# defaults, useless comparisons); SIM flags needless complexity — which is
+# the executable form of the "no AI slop" contract.
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Coverage is reported from Phase 0 but a fail-under threshold is only added
+# in Phase 2 when real ranking logic exists — a threshold over stubs is theater.
+addopts = "-q --cov=app --cov=evalharness --cov-report=term-missing"
