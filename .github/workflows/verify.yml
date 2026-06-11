@@ -1,0 +1,45 @@
+# Cross-platform verification — everything that does NOT need macOS.
+#
+# Why split from ios-build.yml: macOS runners consume the free Actions quota at
+# ~10x the Linux rate (≈200 real macOS minutes/month on the Free plan), so the
+# default gate runs on Linux and the macOS job is path-filtered to ios/**.
+#
+# NOTE: unexercised until this repo has a GitHub remote — validate on first push.
+name: verify
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    # ubuntu-22.04 pinned: Swift 5.10 toolchains target 22.04; bump alongside Swift.
+    runs-on: ubuntu-22.04
+    env:
+      VERIFY_STRICT: "1" # a skipped check is a failed check in CI
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - uses: swift-actions/setup-swift@v2
+        with:
+          swift-version: "5.10"
+
+      - name: Install SwiftLint + SwiftFormat (Linux binaries)
+        run: |
+          curl -fsSL https://github.com/realm/SwiftLint/releases/latest/download/swiftlint_linux.zip -o /tmp/swiftlint.zip
+          unzip -o /tmp/swiftlint.zip -d /tmp/swiftlint
+          sudo install /tmp/swiftlint/swiftlint /usr/local/bin/swiftlint
+          curl -fsSL https://github.com/nicklockwood/SwiftFormat/releases/latest/download/swiftformat_linux.zip -o /tmp/swiftformat.zip
+          unzip -o /tmp/swiftformat.zip -d /tmp/swiftformat
+          sudo install /tmp/swiftformat/swiftformat_linux /usr/local/bin/swiftformat
+
+      - name: Verify
+        run: bash scripts/verify.sh

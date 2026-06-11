@@ -1,0 +1,45 @@
+# iOS build + tests on macOS — the expensive lane, used surgically.
+#
+# Why path-filtered: macOS minutes burn the free Actions quota at ~10x the
+# Linux rate. Backend / docs / reco commits must never trigger this job.
+# The Xcode project itself is GENERATED here from ios/Munch/project.yml
+# (XcodeGen) because the repo is authored on Windows where Xcode cannot run.
+#
+# NOTE: unexercised until this repo has a GitHub remote — validate on first push.
+name: ios-build
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios-build.yml"
+
+# Cancel superseded builds — each run costs real quota.
+concurrency:
+  group: ios-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # macos-26 ships Xcode 26 — mandatory for App Store Connect uploads since 2026-04-28.
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      # FUTURE(Phase 4): pin XcodeGen via Mint — generated projects differ across versions.
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Run MunchKit unit tests
+        run: swift test --package-path ios/Munch/Packages/MunchKit
+
+      - name: Generate Xcode project
+        run: cd ios/Munch && xcodegen generate
+
+      - name: Build app for simulator (unsigned)
+        run: |
+          cd ios/Munch
+          xcodebuild -project Munch.xcodeproj -scheme Munch \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build

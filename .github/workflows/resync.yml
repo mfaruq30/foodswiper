@@ -1,0 +1,31 @@
+# Weekly open-data re-sync (spec §6.4) — scheduled Linux workflow.
+#
+# Why GitHub Actions and not a Supabase edge function: Geofabrik PBF extracts
+# are 290–470 MB, far beyond the edge runtime's CPU/memory/wall-clock limits,
+# and pg_cron can only schedule SQL. A free Linux runner does the heavy ETL.
+#
+# Safety rules the Phase 1 pipeline must implement (see docs/DECISIONS.md):
+#   1. pg_dump the venue tables as a workflow artifact BEFORE writing anything
+#      (the Supabase free tier has no automatic backups).
+#   2. Idempotent upserts keyed on (osm_type, osm_id); tombstone vanished rows
+#      (is_active = false) — NEVER delete, swipe-history FKs must survive.
+#   3. Persist fuzzy-match decisions so re-runs cannot silently re-link
+#      swipe history to a different restaurant.
+name: resync
+
+on:
+  workflow_dispatch:
+  # FUTURE(Phase 1): enable the weekly cron once the seed pipeline exists.
+  # An enabled cron pointing at a stub would burn minutes and mislead.
+  # schedule:
+  #   - cron: "0 9 * * 1" # Mondays 09:00 UTC
+
+jobs:
+  resync:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Not implemented yet
+        run: |
+          echo "ERROR: seed/re-sync pipeline lands in Phase 1 (backend/supabase/seed/)."
+          exit 1
