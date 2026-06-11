@@ -21,7 +21,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      - uses: astral-sh/setup-uv@v8
+      # Exact pin: astral-sh publishes no floating major tag (plain @v8 does
+      # not resolve — verified on first push), so this must be a full version.
+      - uses: astral-sh/setup-uv@v8.2.0
         with:
           python-version: "3.12"
 
