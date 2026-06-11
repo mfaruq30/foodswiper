@@ -184,3 +184,14 @@ Phase 6 (alcohol-venue exposure is the deciding question).
 **Why:** `eval` shadows a Python builtin as a top-level module name — it
 confuses tooling, IDE resolution, and readers. Pure naming-hygiene deviation;
 the spec's contract (reproducible CLI run + metrics table) is unchanged.
+
+## D-016 — `web/` directory added to the spec §3 layout
+
+**Decision:** A top-level `web/` directory (GitHub Pages) is added to the
+repo layout.
+**Why:** TestFlight external testing cannot start without a hosted Privacy
+Policy URL and support contact in App Store Connect (Beta App Information),
+and the spec's layout had no web property anywhere. GitHub Pages is the $0
+hosting answer; it also gives the ODbL attribution obligation a public home.
+**Replaces:** Nothing in the spec — pure addition, recorded so the layout
+audit trail stays complete.

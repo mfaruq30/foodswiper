@@ -2,7 +2,11 @@
 # https://supabase.com/docs/guides/local-development/cli/config
 # A string used to distinguish different Supabase projects on the same host. Defaults to the
 # working directory name when running `supabase init`.
-project_id = "backend"
+# "munch", not the supabase-init default "backend": this id names the local
+# Docker stack, and a generic id collides with any other project initialized
+# from a backend/ folder on this machine. Changing it after the local stack
+# first starts would orphan its volumes — hence fixed now, in Phase 0.
+project_id = "munch"
 
 [api]
 enabled = true

@@ -5,7 +5,9 @@
   "lint": {
     "rules": {
       "tags": ["recommended"],
-      // The spec bans `any` outright (§6.2) — make it a lint error, not a vibe.
+      // no-explicit-any is already in "recommended"; it is pinned explicitly so
+      // an upstream change to that tag set can never silently relax the spec's
+      // outright ban on `any` (§6.2).
       "include": ["no-explicit-any"]
     }
   },

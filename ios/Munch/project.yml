@@ -46,3 +46,12 @@ targets:
   # FUTURE(Phase 4): MunchTests app-target test bundle (view models, coordinator).
   # Until app features exist, MunchKit's `swift test` suite is the real test gate —
   # an empty host-app test bundle here would be scaffold theater.
+
+# Explicit scheme: CI invokes `xcodebuild -scheme Munch`, and relying on
+# xcodebuild's scheme autocreation for a freshly generated project is a known
+# flaky point — make the scheme deterministic instead.
+schemes:
+  Munch:
+    build:
+      targets:
+        Munch: all

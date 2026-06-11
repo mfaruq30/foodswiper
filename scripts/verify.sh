@@ -43,8 +43,9 @@ skip() {
 }
 
 # --- Python: recommendation service (backend/reco) ---------------------------
-# uv pins Python 3.12 and the dev extras; `uv run` syncs the venv on demand so
-# a fresh clone needs no manual setup step.
+# The interpreter is pinned to 3.12 by backend/reco/.python-version (matching
+# CI and the production Dockerfile); `uv run` resolves it and syncs the venv on
+# demand, so a fresh clone needs no manual setup step.
 if command -v uv >/dev/null 2>&1; then
   PY=(uv run --extra dev --)
   if [[ "$TESTS_ONLY" == "0" ]]; then

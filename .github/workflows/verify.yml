@@ -9,6 +9,7 @@ name: verify
 
 on:
   push:
+    branches: [main] # PR branches are covered by pull_request — no double runs
   pull_request:
 
 jobs:
@@ -18,9 +19,9 @@ jobs:
     env:
       VERIFY_STRICT: "1" # a skipped check is a failed check in CI
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@v8
         with:
           python-version: "3.12"
 
@@ -32,12 +33,16 @@ jobs:
         with:
           swift-version: "5.10"
 
-      - name: Install SwiftLint + SwiftFormat (Linux binaries)
+      # Versions pinned deliberately: 'latest' URLs already bit us once (upstream
+      # renamed the SwiftLint asset to *_amd64 and the old name 404s), and an
+      # unpinned linter means lint results can change with no repo change.
+      # The -static binary avoids coupling to the setup-swift runtime libs.
+      - name: Install SwiftLint + SwiftFormat (pinned Linux binaries)
         run: |
-          curl -fsSL https://github.com/realm/SwiftLint/releases/latest/download/swiftlint_linux.zip -o /tmp/swiftlint.zip
+          curl -fsSL https://github.com/realm/SwiftLint/releases/download/0.63.3/swiftlint_linux_amd64.zip -o /tmp/swiftlint.zip
           unzip -o /tmp/swiftlint.zip -d /tmp/swiftlint
-          sudo install /tmp/swiftlint/swiftlint /usr/local/bin/swiftlint
-          curl -fsSL https://github.com/nicklockwood/SwiftFormat/releases/latest/download/swiftformat_linux.zip -o /tmp/swiftformat.zip
+          sudo install /tmp/swiftlint/swiftlint-static /usr/local/bin/swiftlint
+          curl -fsSL https://github.com/nicklockwood/SwiftFormat/releases/download/0.61.1/swiftformat_linux.zip -o /tmp/swiftformat.zip
           unzip -o /tmp/swiftformat.zip -d /tmp/swiftformat
           sudo install /tmp/swiftformat/swiftformat_linux /usr/local/bin/swiftformat
 

@@ -24,7 +24,7 @@ jobs:
   resync:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Not implemented yet
         run: |
           echo "ERROR: seed/re-sync pipeline lands in Phase 1 (backend/supabase/seed/)."

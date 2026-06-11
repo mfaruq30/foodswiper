@@ -25,7 +25,7 @@ jobs:
     # macos-26 ships Xcode 26 — mandatory for App Store Connect uploads since 2026-04-28.
     runs-on: macos-26
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       # FUTURE(Phase 4): pin XcodeGen via Mint — generated projects differ across versions.
       - name: Install XcodeGen
