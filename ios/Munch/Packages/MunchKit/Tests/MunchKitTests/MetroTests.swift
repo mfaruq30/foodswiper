@@ -1,9 +1,8 @@
 // Locks Metro's wire contract — the raw values live in Postgres
 // (`profiles.home_metro`), so a rename here would corrupt the API silently.
 
-import XCTest
-
 @testable import MunchKit
+import XCTest
 
 final class MetroTests: XCTestCase {
     func testRawValuesMatchDatabaseEnum() {

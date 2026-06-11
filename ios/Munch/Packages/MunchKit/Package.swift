@@ -14,7 +14,7 @@ let package = Package(
         .macOS(.v14), // lets the package build/test on macOS CI runners directly
     ],
     products: [
-        .library(name: "MunchKit", targets: ["MunchKit"])
+        .library(name: "MunchKit", targets: ["MunchKit"]),
     ],
     targets: [
         .target(name: "MunchKit"),
