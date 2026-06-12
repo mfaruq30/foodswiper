@@ -57,6 +57,7 @@ def _to_restaurant(doc_id: str, data: dict[str, Any]) -> Restaurant:
         metro=str(data["metro"]),
         dietary_tags=[str(t) for t in data.get("dietary_tags", [])],
         open_state=OpenState.UNKNOWN,  # hours parser is FUTURE(Phase 5), D-010
+        phone=data.get("phone"),
         popularity_prior=float(data.get("popularity_prior", 0.0)),
     )
 

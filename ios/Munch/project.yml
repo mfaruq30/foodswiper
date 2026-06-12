@@ -39,6 +39,15 @@ targets:
         # bumps would never reach the shipped binary (TestFlight trap).
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        # Bundled OFL display serif (spec §4.4 — a real font, not a system
+        # stand-in). XcodeGen copies grouped resources flat into the bundle,
+        # so the registered name has no folder prefix.
+        UIAppFonts:
+          - Fraunces.ttf
+        # The $0 demo talks plain-HTTP to a dev server on the host machine.
+        # Scoped to local networking only — production traffic is HTTPS.
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
         # Honest, user-facing copy — Apple reviewers read this string (spec §8.4).
         NSLocationWhenInUseUsageDescription: >-
           Munch uses your location to find restaurants near you.
@@ -48,9 +57,18 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.munch.app
         TARGETED_DEVICE_FAMILY: "1" # iPhone only for v1
 
-  # FUTURE(Phase 4): MunchTests app-target test bundle (view models, coordinator).
-  # Until app features exist, MunchKit's `swift test` suite is the real test gate —
-  # an empty host-app test bundle here would be scaffold theater.
+  # The Phase 4 gate runner: onboarding -> deck -> swipes -> match against the
+  # live demo backend on the simulator (ios-e2e.yml starts the API first).
+  MunchUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - MunchUITests
+    dependencies:
+      - target: Munch
+
+  # Unit tests for app-target logic stay thin by design: pure logic lives in
+  # MunchKit (tested on Linux); views are exercised by MunchUITests.
 
 # Explicit scheme: CI invokes `xcodebuild -scheme Munch`, and relying on
 # xcodebuild's scheme autocreation for a freshly generated project is a known
@@ -60,3 +78,8 @@ schemes:
     build:
       targets:
         Munch: all
+    # The test action carries the UI-test bundle so `xcodebuild test -scheme
+    # Munch -only-testing:MunchUITests` works in the ios-e2e gate lane.
+    test:
+      targets:
+        - MunchUITests

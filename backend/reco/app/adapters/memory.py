@@ -42,6 +42,7 @@ def restaurant_from_canonical(record: dict[str, Any]) -> Restaurant:
         metro=str(record["metro"]),
         dietary_tags=[str(t) for t in record.get("dietary_tags", [])],
         open_state=OpenState.UNKNOWN,
+        phone=record.get("phone"),
         popularity_prior=float(record.get("popularity_prior", 0.0)),
         internal_score=None,
         internal_impressions=0,

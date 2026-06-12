@@ -1,23 +1,45 @@
-// App entry point.
-//
-// Phase 0 ships a deliberate placeholder view: the real root (coordinator →
-// onboarding/swipe) arrives in Phase 4. The target exists now so the macOS CI
-// pipeline (xcodegen → xcodebuild) is proven before feature code depends on it.
+// App entry point + the thin root coordinator (spec §2: MVVM with a thin
+// coordinator — routing decisions live here and nowhere else).
 
 import MunchKit
 import SwiftUI
 
 @main
 struct MunchApp: App {
+    @State private var container = AppContainer()
+
     var body: some Scene {
         WindowGroup {
-            // FUTURE(Phase 4): replace with AppCoordinator's root view.
-            VStack(spacing: 8) {
-                Text("Munch")
-                    .font(.largeTitle.bold())
-                Text(Metro.allCases.map(\.displayName).joined(separator: " · "))
-                    .font(.footnote)
-            }
+            RootCoordinatorView()
+                .environment(container)
+                .tint(Theme.accent)
+                .background(Theme.paper)
+        }
+    }
+}
+
+/// Routes between onboarding and the main app — the only place that decides
+/// "which world is the user in".
+struct RootCoordinatorView: View {
+    @Environment(AppContainer.self) private var container
+
+    var body: some View {
+        if container.homeMetro == nil {
+            OnboardingFlowView()
+        } else {
+            MainTabView()
+        }
+    }
+}
+
+/// The signed-in shell: Swipe is the product; Profile is the utility drawer.
+struct MainTabView: View {
+    var body: some View {
+        TabView {
+            SwipeScreen()
+                .tabItem { Label("Munch", systemImage: "flame.fill") }
+            ProfileScreen()
+                .tabItem { Label("Profile", systemImage: "person.crop.circle") }
         }
     }
 }

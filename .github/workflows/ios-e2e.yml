@@ -1,0 +1,59 @@
+# The Phase 4 gate lane: full product loop on the iOS simulator against the
+# live demo backend (memory mode + committed fixtures).
+#
+# workflow_dispatch ONLY — a simulator UI test burns ~10 real macOS minutes
+# (~100 quota-minutes), so this runs at phase gates and before releases, not
+# per push. ios-build.yml stays the cheap per-push compile check.
+name: ios-e2e
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ios-e2e
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Start the demo API (memory backend, committed fixtures)
+        run: |
+          pip install --quiet ./backend/reco
+          cd backend/reco
+          MUNCH_BACKEND=memory MUNCH_AUTH=dev \
+            VENUES_NDJSON=fixtures/venues.sample.ndjson \
+            nohup python -m uvicorn app.main:app --port 8123 > /tmp/api.log 2>&1 &
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8123/health && break || sleep 1
+          done
+          curl -sf http://localhost:8123/health
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        run: cd ios/Munch && xcodegen generate
+
+      - name: Run the demo-flow UI test
+        env:
+          TEST_RUNNER_MUNCH_API_URL: http://localhost:8123
+        run: |
+          cd ios/Munch
+          xcodebuild test -project Munch.xcodeproj -scheme Munch \
+            -destination 'platform=iOS Simulator,name=iPhone 17' \
+            -only-testing:MunchUITests \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload API log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-log
+          path: /tmp/api.log

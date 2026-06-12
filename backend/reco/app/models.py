@@ -54,6 +54,8 @@ class Restaurant:
     open_state: OpenState
     # Cold-start prior from open data (tag richness + inspection recency).
     popularity_prior: float
+    # Optional contact for the dine-in "Call" CTA; sparse in open data.
+    phone: str | None = None
     # Munch-owned swipe-derived signal; None until enough impressions exist.
     internal_score: float | None = None
     internal_impressions: int = 0

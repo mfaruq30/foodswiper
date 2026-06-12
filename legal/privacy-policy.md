@@ -14,11 +14,12 @@ _Last updated: not yet published._
    identifiers, usage analytics.
 2. **Why** — including that swipe/conversion data trains the recommendation
    model that personalizes results.
-3. **Third parties** — Supabase (hosting/DB/auth); Anthropic (reason
-   generation: a compact, non-identifying taste profile only — never account
-   identifiers); deep-link handoffs (tapping "order"/"directions" hands off to
-   Apple Maps / DoorDash / Uber Eats, whose own policies then apply).
-   **No Google, Yelp, or Beli data is collected, scraped, or shared.**
+3. **Third parties** — Google Firebase (hosting/database/auth — D-019);
+   Anthropic (reason generation: a compact, non-identifying taste profile only
+   — never account identifiers); deep-link handoffs (tapping
+   "order"/"directions" hands off to Apple Maps / DoorDash / Uber Eats, whose
+   own policies then apply). **No Google Maps/Places, Yelp, or Beli data is
+   collected, scraped, or shared.**
 4. **Data sources & attribution** — restaurant data © OpenStreetMap
    contributors (ODbL), NYC Open Data, Analyze Boston. Mirrors the in-app
    "Data sources" screen.

@@ -95,6 +95,12 @@ class CardResponse(BaseModel):
     price_tier: int
     price_imputed: bool
     distance_m: float
+    # Venue coordinates + optional phone power the client's conversion CTAs
+    # (Apple Maps directions, tel:). Coordinates are ODbL open data — safe to
+    # expose; attribution ships in-app (spec 8.1).
+    lat: float
+    lon: float
+    phone: str | None
     reason: str
     position: int
     explore: bool
@@ -271,6 +277,9 @@ def create_app(
                     distance_m=round(
                         haversine_m(body.lat, body.lon, c.restaurant.lat, c.restaurant.lon), 1
                     ),
+                    lat=c.restaurant.lat,
+                    lon=c.restaurant.lon,
+                    phone=c.restaurant.phone,
                     reason=c.reason,
                     position=c.position,
                     explore=c.explore,
