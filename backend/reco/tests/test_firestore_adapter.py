@@ -253,6 +253,38 @@ def test_delete_user_events_terminates_and_deletes_all() -> None:
     assert set(swipes) == {"other"}  # u1 purged, u2 untouched — and the loop ended
 
 
+def test_reason_cache_returns_unexpired_hits_keyed_back_to_tuples() -> None:
+    from datetime import UTC, datetime, timedelta
+
+    from app.adapters.firestore import FirestoreReasonCache
+
+    now = datetime.now(UTC)
+    client = _FakeClient(
+        {
+            "reason_cache": {
+                # doc id format is "{restaurant_id}|{archetype}|{mode}"
+                "osm:node:1|pizza+ramen|dine_in": {
+                    "reason": "Your kind of slice",
+                    "expires_at": now + timedelta(hours=2),
+                },
+                "osm:node:2|pizza+ramen|dine_in": {
+                    "reason": "Stale — should be filtered",
+                    "expires_at": now - timedelta(hours=2),
+                },
+            }
+        }
+    )
+    cache = FirestoreReasonCache(client)  # type: ignore[arg-type]
+    keys = [
+        ("osm:node:1", "pizza+ramen", "dine_in"),
+        ("osm:node:2", "pizza+ramen", "dine_in"),  # expired
+        ("osm:node:3", "pizza+ramen", "dine_in"),  # absent
+    ]
+    hits = cache.get_many(keys)
+    # Only the present, unexpired entry — mapped back to its tuple key.
+    assert hits == {("osm:node:1", "pizza+ramen", "dine_in"): "Your kind of slice"}
+
+
 def test_event_log_writes_required_fields() -> None:
     appended: list[tuple[str, dict[str, Any]]] = []
 

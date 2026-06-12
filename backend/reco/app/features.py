@@ -68,6 +68,10 @@ def extract_features(
     anchors = set(user.anchor_cuisines) | set(user.cuisine_weights)
 
     distance = haversine_m(ctx.user_lat, ctx.user_lon, restaurant.lat, restaurant.lon)
+    # NOTE (D-023 pre-promotion item #2): distance_norm and proximity both scale
+    # by the request radius, so the synthetic trainer's fixed 8000m radius
+    # shifts these features vs the variable serve radius. Latent (the challenger
+    # never serves); real-data training on logged radii resolves it.
     distance_norm = distance / ctx.max_distance_m if ctx.max_distance_m > 0 else 1.0
 
     if user.price_pref is None:

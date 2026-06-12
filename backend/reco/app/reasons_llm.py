@@ -27,6 +27,19 @@ DEFAULT_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5")
 # verbose model can't break the card layout; the templated fallback already
 # guarantees a good line, so this is pure upside.
 _MAX_TOKENS = 60
+# The system prompt ASKS for <=90 chars, but that's a soft instruction; this
+# is the hard guarantee enforced after generation (a 60-token reply can still
+# exceed it). Clamped at a word boundary so a card never shows a mangled line.
+_MAX_REASON_CHARS = 90
+
+
+def _clamp_reason(text: str) -> str:
+    """Trim to <=90 chars at a word boundary; drop a trailing comma."""
+    if len(text) <= _MAX_REASON_CHARS:
+        return text
+    cut = text[:_MAX_REASON_CHARS].rsplit(" ", 1)[0].rstrip(",")
+    return cut or text[:_MAX_REASON_CHARS]
+
 
 _SYSTEM = (
     "You write one-line restaurant recommendation reasons for a swipe app. "
@@ -38,8 +51,10 @@ _SYSTEM = (
 
 @dataclass(slots=True)
 class VenueSummary:
-    """The minimal, non-identifying venue facts a reason may use."""
+    """The minimal venue facts a reason may use. `id` is the stable cache key;
+    `name` is for prompt context only and is NOT unique (many "Joe's Pizza")."""
 
+    id: str
     name: str
     cuisines: list[str]
     price_tier: int
@@ -87,7 +102,7 @@ class AnthropicReasonGenerator:
             for block in message.content
             if getattr(block, "type", "") == "text"
         )
-        return text.strip().strip('"').strip()
+        return _clamp_reason(text.strip().strip('"').strip())
 
 
 def build_generator() -> AnthropicReasonGenerator | None:
@@ -111,17 +126,17 @@ def pregenerate(
 ) -> dict[tuple[str, str, str], str]:
     """Produce cache entries for every (venue, archetype) pair in one mode.
 
-    Keyed by (venue.name-as-id placeholder, archetype, mode) — the caller maps
-    venue.name back to the real restaurant id. Pure orchestration: the job
-    persists the returned dict into the ReasonCache. A generation that raises
-    is skipped (one bad venue must not sink the batch); the templated reason
-    remains the fallback for any skipped pair.
+    Keyed by (venue.id, archetype, mode) — the venue id, NOT the name, because
+    names collide (many "Joe's Pizza") and name-keying would silently drop one.
+    Pure orchestration: the job persists the returned dict into the ReasonCache.
+    A generation that raises is skipped (one bad venue must not sink the batch);
+    the templated reason remains the fallback for any skipped pair.
     """
     out: dict[tuple[str, str, str], str] = {}
     for venue in venues:
         for archetype in archetypes:
             try:
-                out[(venue.name, archetype, mode)] = generator.generate(venue, archetype, mode)
+                out[(venue.id, archetype, mode)] = generator.generate(venue, archetype, mode)
             except Exception:
                 continue
     return out

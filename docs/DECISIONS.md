@@ -19,6 +19,24 @@ heuristic), the champion/challenger gate is reproducible
 already exposes the exact (features, label, group) shape the real
 `from_reco_events` loader will fill (D-008).
 
+**Pre-promotion checklist (tracked, NOT done — must clear before serving):**
+1. **Train on real logged swipes** via `from_reco_events`, not the synthetic
+   simulator. This also dissolves (2): real reco_events carry the real,
+   variable request radii.
+2. **Train/serve radius skew (Phase 5 review, medium-latent):** the synthetic
+   trainer hardwires `max_distance_m=8000`, but serving uses the request radius
+   (default 3000, client-variable), so `proximity`/`distance_norm` features
+   shift train→serve. Harmless today (challenger never serves); real-data
+   training fixes it because logged radii match production.
+3. **Temporal split.** `split_by_group` splits decks randomly; D-008 requires a
+   *temporal* split on real data (never leak future swipes into the past). The
+   synthetic source has no time axis, so this is deferred to the real loader.
+4. **Determinism across environments.** `train.py` is byte-reproducible on a
+   fixed machine but not across thread counts (LightGBM histogram float order).
+   The gate's 9.4× margin (0.047 vs 0.005) absorbs the drift, so ml-eval won't
+   flake; set `deterministic=true`/`force_row_wise=true` only if exact
+   cross-env reproducibility is ever required.
+
 ## D-024 — LLM reasons via cached pre-generation, never on the serve path
 
 **Decision:** Card reasons are templated by default (app/reasons). A background

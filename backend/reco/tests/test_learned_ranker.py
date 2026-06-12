@@ -75,8 +75,10 @@ def test_serving_round_trip_and_feature_contract_guard(tmp_path: Path) -> None:
     ctx = RequestContext(
         mode=Mode.DINE_IN, metro="nyc", user_lat=40.7308, user_lon=-73.9973, max_distance_m=3000
     )
-    ordered = ranker.rank(user, ctx, [_restaurant("a", "italian"), _restaurant("b", "bbq")])
-    assert {r.id for r in ordered} == {"a", "b"}  # ranks the candidate set, no drops/dupes
+    ordered = ranker.rank(user, ctx, [_restaurant("b", "bbq"), _restaurant("a", "italian")])
+    # The italian candidate matches the italian anchor — the model must rank it
+    # first. Asserting ORDER (not just the set) pins the ranking semantics.
+    assert [r.id for r in ordered] == ["a", "b"]
 
     # A feature-contract mismatch must be REFUSED (fail safe to heuristic).
     meta = json.loads(model_path.with_suffix(".meta.json").read_text())

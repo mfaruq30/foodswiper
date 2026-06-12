@@ -92,11 +92,21 @@ def build_synthetic_dataset(
 def split_by_group(
     dataset: RankingDataset, validation_fraction: float, seed: int
 ) -> tuple[RankingDataset, RankingDataset]:
-    """Hold out whole decks (D-008: never split a deck across the boundary)."""
+    """Hold out whole decks (D-008: never split a deck across the boundary).
+
+    The split is RANDOM by deck. D-008 mandates a TEMPORAL split on real data
+    (never leak future swipes into the past); the synthetic source has no time
+    axis, so temporal splitting is deferred to the real `from_reco_events`
+    loader (D-023 pre-promotion item #3).
+    """
+    if len(dataset.groups) < 2:
+        raise ValueError("need at least 2 decks to split")
     rng = random.Random(seed)
     deck_indices = list(range(len(dataset.groups)))
     rng.shuffle(deck_indices)
-    n_val = max(1, int(len(deck_indices) * validation_fraction))
+    # Clamp so neither side is empty — an empty train set fails opaquely deep
+    # inside LightGBM. (Synthetic runs are large; this guards the real loader.)
+    n_val = min(max(1, int(len(deck_indices) * validation_fraction)), len(deck_indices) - 1)
     val_decks = set(deck_indices[:n_val])
 
     # Row offsets per deck, to slice the flat matrix back into decks.
