@@ -3,6 +3,22 @@
 > Phase 0 skeleton. Each section is filled in the phase that makes it real;
 > placeholders say so explicitly rather than pretending.
 
+## Firebase (project food-5eb2a, D-019)
+
+- **Credentials for seeding/admin:** either set `GOOGLE_APPLICATION_CREDENTIALS`
+  to a service-account key JSON (Firebase console → Project settings → Service
+  accounts → Generate new private key) or run
+  `npx firebase-tools login` + `gcloud auth application-default login`.
+  Never commit the key; it is the root password.
+- **Load venues:** `uv run -- python -m munch_seed.run --load-firestore food-5eb2a`
+  (re-uses cached extracts; consumes `seed_out/venues.ndjson`).
+- **Deploy rules + indexes:** `npx firebase-tools deploy --only firestore --project food-5eb2a`.
+- **Emulator (needs Java, installed):** `npx firebase-tools emulators:start`;
+  point the API at it with `FIRESTORE_EMULATOR_HOST=localhost:8089`.
+- **Run the API locally, $0 demo mode (no Firebase at all):**
+  `MUNCH_BACKEND=memory MUNCH_AUTH=dev VENUES_NDJSON=<path> uvicorn app.main:app`
+  — dev auth treats the bearer token as the uid; never enable outside demos.
+
 ## Deploy
 
 - **Reco service (Cloud Run):** _Phase 3._ `gcloud run deploy` from

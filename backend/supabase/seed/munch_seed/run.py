@@ -75,6 +75,13 @@ def seed_metro(metro: str, cache_dir: Path, out_dir: Path, db_url: str | None) -
     ]
     print(f"[{metro}] curated venues: {len(venues)} (matched: {len(match_rows)})")
 
+    # The canonical, backend-neutral artifact every writer consumes (D-019).
+    from .canonical import append_ndjson
+
+    ndjson_path = out_dir / "venues.ndjson"
+    append_ndjson(venues, ndjson_path)
+    print(f"[{metro}] appended {len(venues)} records to {ndjson_path}")
+
     if db_url:
         from .emit import load_direct
 
@@ -93,10 +100,20 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--metro", choices=[*METRO_BOUNDS], action="append", dest="metros")
     parser.add_argument("--cache-dir", default=".seed_cache", type=Path)
     parser.add_argument("--out-dir", default="seed_out", type=Path)
+    parser.add_argument(
+        "--load-firestore",
+        metavar="PROJECT_ID",
+        help="after the run, upsert venues.ndjson into this Firebase project (D-019)",
+    )
     args = parser.parse_args(argv)
 
     metros = args.metros or list(METRO_BOUNDS)
     db_url = os.environ.get("SUPABASE_DB_URL") or None
+
+    # Fresh canonical artifact per full run; per-metro stages append to it.
+    ndjson_path = args.out_dir / "venues.ndjson"
+    if ndjson_path.exists():
+        ndjson_path.unlink()
 
     failed = False
     for metro in metros:
@@ -116,6 +133,15 @@ def main(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
             failed = True
+
+    if args.load_firestore and not failed:
+        from .firestore_writer import load_ndjson_to_firestore
+
+        upserted, tombstoned = load_ndjson_to_firestore(ndjson_path, args.load_firestore)
+        print(f"[firestore] upserted {upserted}, tombstoned {tombstoned} ({args.load_firestore})")
+    elif args.load_firestore:
+        print("[firestore] SKIPPED: run failed its floors; not loading bad data", file=sys.stderr)
+
     return 1 if failed else 0
 
 

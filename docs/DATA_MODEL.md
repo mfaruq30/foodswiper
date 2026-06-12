@@ -1,8 +1,34 @@
 # Munch — Data Model
 
-> Phase 0: planned schema. Phase 1 turns this into versioned migrations with
-> RLS enabled in the same migration as every CREATE TABLE (DECISIONS.md D-012),
-> verified by pgTAP. This document then tracks the live schema exactly.
+> **Live backend: Firebase/Firestore (D-019), project `food-5eb2a`.** The
+> Postgres schema below it remains the design reference and the
+> migration-back path — the SQL migrations + pgTAP suite stay in git.
+
+## Firestore collections (Phase 3, live)
+
+| Collection | Doc id | Contents | Written by |
+|---|---|---|---|
+| `venues/{id}` | `osm:<type>:<id>` (stable across re-seeds & backends) | canonical venue fields + derived `geohash`, `name_lower`, `is_active` | seed writer only |
+| `venue_scores/{id}` | same as venue | `impressions`, `rights`, `internal_score` (decayed posterior) — Munch-owned; created once, never reset by re-seeds | API / weekly job |
+| `profiles/{uid}` | Firebase auth uid | taste profile incl. server-maintained `recent_right_cuisines` | API |
+| `swipes`, `conversions`, `feedback`, `reco_events` | auto | append-only events (card_position + explore on swipes, D-008) | API |
+
+**Security model:** `firestore.rules` is **deny-all for clients** — the iOS
+app speaks only the Munch HTTP API (Cloud Run, Admin SDK). No per-collection
+rules to audit because there is no client surface; this is also the
+portability seam (D-019).
+
+**Canonical artifact:** `venues.ndjson` (seed pipeline output) is the
+backend-neutral source of truth — plain WGS84 lat/lon floats, no geohash, no
+backend fields. Both the Firestore writer and any future Postgres writer
+consume it. Composite indexes: `firestore.indexes.json`.
+
+---
+
+## Postgres reference schema (superseded by D-019, retained for migration-back)
+
+> Phase 1 implemented this fully: versioned migrations with RLS enabled in the
+> same migration as every CREATE TABLE (D-012), verified by pgTAP in CI.
 
 ## Conventions
 

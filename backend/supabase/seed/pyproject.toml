@@ -20,6 +20,9 @@ dev = [
     "pytest>=8.3",
     "pytest-cov>=6.0",
 ]
+# Only needed when actually loading into Firestore (--load-firestore);
+# imported lazily so the core pipeline stays dependency-light.
+firestore = ["google-cloud-firestore>=2.19"]
 
 [build-system]
 requires = ["hatchling"]
@@ -41,6 +44,12 @@ python_version = "3.12"
 # pyosmium ships no type stubs; its handler API is dynamic by nature.
 [[tool.mypy.overrides]]
 module = "osmium.*"
+ignore_missing_imports = true
+
+# google-cloud-firestore is an optional extra (not installed in the dev venv);
+# the writer imports it lazily inside the load function.
+[[tool.mypy.overrides]]
+module = "google.cloud.*"
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

@@ -10,6 +10,8 @@ dependencies = [
     "fastapi>=0.115",
     "pydantic>=2.7",
     "uvicorn[standard]>=0.30",
+    "google-cloud-firestore>=2.19", # production backend (D-019, food-5eb2a)
+    "firebase-admin>=6.5",          # ID-token verification + auth-account deletion
 ]
 
 [project.optional-dependencies]
@@ -42,6 +44,12 @@ select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
 [tool.mypy]
 strict = true
 python_version = "3.12"
+# firebase_admin ships no type stubs; its surface is contained inside
+# adapters/firestore.py behind the TokenVerifier port so untyped code never
+# leaks past the seam.
+[[tool.mypy.overrides]]
+module = "firebase_admin.*"
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -54,15 +54,22 @@ flowchart LR
    exposes every public-schema table via PostgREST to anon-key holders, and
    the anon key ships inside the IPA. No exceptions, verified by pgTAP.
 
-## Request flow: "give me a deck" (Phase 3+)
+## Request flow: "give me a deck" (Phase 3, live — Firebase edition, D-019)
 
-1. iOS calls `get-deck` edge function with the user's Supabase JWT + mode + location.
-2. `get-deck` forwards to the reco service (JWT verified against project JWKS).
-3. Reco service: L1 hard filters → L2/L4 scoring → exploration slots +
-   per-cuisine cap → returns ranked candidates.
-4. `get-deck` applies sponsorship insertion rules, logs the served deck to
-   `reco_events` (the training log), returns cards with cached reasons.
-5. iOS pre-fetches the next 5 cards so a swipe never waits on the network.
+1. iOS calls `POST /v1/deck` on the Munch API (Cloud Run) with its Firebase ID
+   token + mode + location. The client NEVER talks to Firestore directly —
+   that is the portability seam, and why `firestore.rules` is deny-all.
+2. The API verifies the token (TokenVerifier port → firebase_admin) and loads
+   the profile (ProfileStore port).
+3. VenueRepository port retrieves candidates: geohash range queries + exact
+   haversine post-filter (Firestore adapter) — or one ST_DWithin on a future
+   Postgres adapter; the API can't tell the difference.
+4. Deck assembly: L1 hard filters → L2 heuristic scoring with a Thompson draw
+   on the quality term → per-cuisine cap → 2 explore slots (D-009), each card
+   with a templated reason (LLM-cached reasons arrive in Phase 5, D-004).
+5. The served deck is logged to `reco_events` with explore flags — the
+   training log (D-008) — and returned. iOS pre-fetches the next deck so a
+   swipe never waits on the network.
 
 ## Repo layout
 

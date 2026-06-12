@@ -1,0 +1,18 @@
+rules_version = '2';
+
+// DENY ALL client access — and that is the design, not a placeholder.
+//
+// The iOS app never talks to Firestore directly: every read and write flows
+// through the Munch API (Cloud Run), which uses the Admin SDK and bypasses
+// these rules. That single choice is what keeps the backend swappable
+// (DECISIONS.md D-019 seam) AND collapses the security surface: there are no
+// per-collection rules to audit because there is no client surface at all.
+// If a client-readable collection is ever introduced, it gets an explicit
+// allow rule here and a written decision record first.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
