@@ -60,7 +60,6 @@ struct MatchView: View {
 
     // MARK: - CTAs (log first, then open)
 
-    @ViewBuilder
     private var ctaSection: some View {
         VStack(spacing: Theme.space4) {
             switch mode {

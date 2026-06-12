@@ -41,7 +41,8 @@ public enum SwipeCommit {
         // A flick must agree in direction with the actual travel — a wobble
         // that ends with opposite prediction must not commit.
         if abs(predictedEndX) >= flickDistance,
-           predictedEndX.sign == translationX.sign, translationX != 0 {
+           predictedEndX.sign == translationX.sign, translationX != 0
+        {
             return predictedEndX > 0 ? .right : .left
         }
         return .none

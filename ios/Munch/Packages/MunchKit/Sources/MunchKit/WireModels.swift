@@ -38,7 +38,9 @@ public struct DeckCard: Codable, Identifiable, Equatable, Sendable {
     public let position: Int
     public let explore: Bool
 
-    public var id: String { restaurantId }
+    public var id: String {
+        restaurantId
+    }
 
     enum CodingKeys: String, CodingKey {
         case restaurantId = "restaurant_id"
@@ -200,7 +202,9 @@ public struct SearchResult: Codable, Identifiable, Equatable, Sendable {
     public let name: String
     public let cuisines: [String]
 
-    public var id: String { restaurantId }
+    public var id: String {
+        restaurantId
+    }
 
     enum CodingKeys: String, CodingKey {
         case name, cuisines

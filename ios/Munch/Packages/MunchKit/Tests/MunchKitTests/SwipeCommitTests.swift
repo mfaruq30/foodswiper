@@ -1,8 +1,7 @@
 // The gesture-commit thresholds are the swipe feel — pin them (spec §4.3).
 
-import XCTest
-
 @testable import MunchKit
+import XCTest
 
 final class SwipeCommitTests: XCTestCase {
     func testUnderThresholdSnapsBack() {
@@ -32,7 +31,7 @@ final class SwipeCommitTests: XCTestCase {
             SwipeCommit.rotationDegrees(translationX: 240), SwipePhysics.maxRotationDegrees
         )
         XCTAssertEqual(
-            SwipeCommit.rotationDegrees(translationX: -10_000),
+            SwipeCommit.rotationDegrees(translationX: -10000),
             -SwipePhysics.maxRotationDegrees
         )
         XCTAssertLessThan(SwipeCommit.rotationDegrees(translationX: 120), 12)

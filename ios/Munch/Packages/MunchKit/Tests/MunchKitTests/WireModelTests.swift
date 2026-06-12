@@ -2,9 +2,8 @@
 // server field fails here, not as a blank screen in the app.
 
 import Foundation
-import XCTest
-
 @testable import MunchKit
+import XCTest
 
 final class WireModelTests: XCTestCase {
     func testDeckResponseDecodes() throws {

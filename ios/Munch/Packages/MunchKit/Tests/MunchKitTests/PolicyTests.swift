@@ -1,8 +1,7 @@
 // Match + pre-fetch policies: small rules, load-bearing behavior.
 
-import XCTest
-
 @testable import MunchKit
+import XCTest
 
 final class PolicyTests: XCTestCase {
     private func card(_ id: String, position: Int) -> DeckCard {

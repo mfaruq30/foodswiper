@@ -88,9 +88,9 @@ actor APIClient {
     }
 
     @discardableResult
-    private func send<Body: Encodable, Reply: Decodable>(
+    private func send<Reply: Decodable>(
         _ method: String, _ path: String, query: [URLQueryItem]? = nil,
-        body: Body?, expecting: Reply.Type
+        body: (some Encodable)?, expecting _: Reply.Type
     ) async throws -> Reply {
         var url = baseURL.appending(path: path)
         if let query, var components = URLComponents(url: url, resolvingAgainstBaseURL: false) {

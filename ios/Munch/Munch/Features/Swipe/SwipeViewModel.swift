@@ -48,7 +48,9 @@ final class SwipeViewModel {
     var presentedMatch: Match?
 
     /// Cards-only projection of the queue for the card stack and the states.
-    var cards: [DeckCard] { queue.map { $0.card } }
+    var cards: [DeckCard] {
+        queue.map(\.card)
+    }
 
     /// Display name of the active metro, for the location-fallback banner.
     var metroDisplayName: String {
@@ -131,7 +133,8 @@ final class SwipeViewModel {
         if direction == .right {
             rightSwipes.append(entry.card)
             if !matchShownThisSession,
-               let match = MatchPolicy.match(rightSwipes: rightSwipes) {
+               let match = MatchPolicy.match(rightSwipes: rightSwipes)
+            {
                 presentedMatch = Match(primary: match.primary, alternates: match.alternates)
                 matchShownThisSession = true
             }

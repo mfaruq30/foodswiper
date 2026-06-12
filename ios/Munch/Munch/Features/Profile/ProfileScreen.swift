@@ -20,10 +20,12 @@ struct ProfileScreen: View {
 
     /// Honest footer: dietary coverage in open data is patchy, and an empty
     /// deck should point users at the fix, not leave them guessing.
+    // swiftformat:disable indent -- string interiors are content, not code
     private static let dietaryFooter = """
         Filters every deck. Coverage comes from OpenStreetMap tags and can be \
         sparse — if decks come up empty, try relaxing these.
         """
+    // swiftformat:enable indent
 
     var body: some View {
         NavigationStack {
@@ -227,7 +229,9 @@ struct ProfileScreen: View {
 private struct DietaryOption: Identifiable {
     let flag: String
     let label: String
-    var id: String { flag }
+    var id: String {
+        flag
+    }
 }
 
 /// Minimal wrapping chip row — SwiftUI has no built-in flow layout, and chips
@@ -235,7 +239,7 @@ private struct DietaryOption: Identifiable {
 private struct FlowRow: Layout {
     var spacing: CGFloat = Theme.space3
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache _: inout ()) -> CGSize {
         let maxWidth = proposal.width ?? .infinity
         var rowWidth: CGFloat = 0
         var rowHeight: CGFloat = 0
@@ -257,7 +261,7 @@ private struct FlowRow: Layout {
         return CGSize(width: maxWidth.isFinite ? maxWidth : totalWidth, height: totalHeight)
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    func placeSubviews(in bounds: CGRect, proposal _: ProposedViewSize, subviews: Subviews, cache _: inout ()) {
         var x = bounds.minX
         var y = bounds.minY
         var rowHeight: CGFloat = 0

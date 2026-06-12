@@ -20,7 +20,9 @@ struct SwipeCardStack: View {
     @State private var dragTranslation: CGSize = .zero
     @State private var isFlyingOff = false
 
-    private var visibleCards: [DeckCard] { Array(cards.prefix(StackLayout.visibleDepth)) }
+    private var visibleCards: [DeckCard] {
+        Array(cards.prefix(StackLayout.visibleDepth))
+    }
 
     var body: some View {
         ZStack {

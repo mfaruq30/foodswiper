@@ -184,5 +184,7 @@ struct LegalView: View {
 private struct LegalSection: Identifiable {
     let heading: String
     let text: String
-    var id: String { heading }
+    var id: String {
+        heading
+    }
 }
