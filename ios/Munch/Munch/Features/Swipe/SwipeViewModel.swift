@@ -133,8 +133,7 @@ final class SwipeViewModel {
         if direction == .right {
             rightSwipes.append(entry.card)
             if !matchShownThisSession,
-               let match = MatchPolicy.match(rightSwipes: rightSwipes)
-            {
+               let match = MatchPolicy.match(rightSwipes: rightSwipes) {
                 presentedMatch = Match(primary: match.primary, alternates: match.alternates)
                 matchShownThisSession = true
             }

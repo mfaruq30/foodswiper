@@ -18,9 +18,9 @@ struct ProfileScreen: View {
         DietaryOption(flag: "halal", label: "Halal"),
     ]
 
-    /// Honest footer: dietary coverage in open data is patchy, and an empty
-    /// deck should point users at the fix, not leave them guessing.
     // swiftformat:disable indent -- string interiors are content, not code
+    // Honest footer: dietary coverage in open data is patchy, and an empty
+    // deck should point users at the fix, not leave them guessing.
     private static let dietaryFooter = """
         Filters every deck. Coverage comes from OpenStreetMap tags and can be \
         sparse — if decks come up empty, try relaxing these.

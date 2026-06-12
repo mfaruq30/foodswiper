@@ -3,4 +3,7 @@
 --swiftversion 5.10
 --maxwidth 120
 --indent 4
+# SwiftLint's opening_brace demands same-line braces; this rule demands the
+# opposite after multiline conditions. One must yield — SwiftLint wins.
+--disable wrapMultilineStatementBraces
 --exclude Packages/MunchKit/.build
