@@ -209,6 +209,37 @@ cafes), so property id alone is not unique. The composite is stable across
 re-uploads as long as the venue keeps its name and category — acceptable for
 an enrichment join, revisit if Boston restores a license-number field.
 
+## D-019 — Backend pivots from Supabase/Postgres to Firebase
+
+**Decision:** The live backend is Firebase (Firestore + Firebase Auth +
+Cloud Run for the reco service), not Supabase/Postgres. Confirmed by Mirza
+2026-06-11 after the borrowed free Supabase org hit its 2-project cap.
+**Carries over unchanged:** every DB-agnostic piece — the entire seed
+*processing* pipeline (OSM extraction, inspection fetch, fuzzy matching,
+cuisine canonicalization, curation, dedup) and ALL of Phase 2 (filters,
+heuristic scorer, eval harness). None of it ever touched the database.
+**Rewritten (persistence + security only):** Postgres migrations → Firestore
+collections + composite indexes; RLS policies → Firestore Security Rules;
+pgTAP → @firebase/rules-unit-testing; seed `emit.py` SQL writer → a Firestore
+document writer that stamps a geohash per venue. DATA_MODEL.md's schema
+*design* is retained; the SQL is not.
+**Geospatial cost (real):** Firestore has no PostGIS. "Restaurants near me"
+uses geohash-range queries (geofire-common pattern) with precise distance +
+cuisine/price/open-now filtering applied in the reco service after fetch.
+Viable at ~800 venues/metro; weaker than PostGIS, accepted.
+**Architecture simplification:** client→Firestore writes guarded by Security
+Rules (swipes/conversions) + the FastAPI reco service reading Firestore via
+the Admin SDK collapse the separate edge-function tier. get-deck logic lives
+in the reco service (Cloud Run free tier), not edge functions.
+**Cost catch:** Firestore + Auth are free (Spark); Cloud Functions need the
+Blaze plan (card on file, free allowance). Staying on Cloud Run keeps the
+billing surface minimal.
+**Supersedes the Supabase specifics of:** D-002 (hosting), D-006 (re-sync
+home is still a GitHub Actions cron, now writing Firestore), D-012/D-017
+(RLS/grants → Security Rules), D-013 (account deletion still needs Apple
+TN3194 token revocation, now via the Firebase Admin SDK + a server call).
+The Postgres migrations + pgTAP suite remain in git history for reference.
+
 ## D-016 — `web/` directory added to the spec §3 layout
 
 **Decision:** A top-level `web/` directory (GitHub Pages) is added to the
