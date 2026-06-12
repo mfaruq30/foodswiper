@@ -209,6 +209,23 @@ cafes), so property id alone is not unique. The composite is stable across
 re-uploads as long as the venue keeps its name and category — acceptable for
 an enrichment join, revisit if Boston restores a license-number field.
 
+## D-020 — Eval NDCG grades against clean truth, not the noisy draw
+
+**Decision:** The synthetic eval grades NDCG against each venue's **noise-free
+expected utility**; observation noise lives only in the binary labels
+(right/left flips). The oracle ranks by that same clean signal and is therefore
+NDCG 1.0 by definition — an idealized perfect-knowledge reference.
+**Why (a Phase-2 adversarial review caught this):** the first version stored a
+single *noisy* utility draw, had the oracle sort by it, and graded NDCG against
+that same column — so the oracle was trivially perfect and the heuristic→oracle
+gap was falsely attributed to the hidden `vibe` term (zeroing `vibe` closed only
+~0.013 of the 0.167 gap). The real gap is the heuristic's thin taste projection
+(anchors + adjacency, not the full per-cuisine utility vector) plus label noise.
+**Consequence:** the bracket is now honest — random floor < heuristic <
+idealized ceiling — and the docs/docstrings attribute the gap correctly. The
+oracle's 1.0 is explicitly a definitional ceiling, not an achievable target.
+Refines D-007; does not change the spec's metric list.
+
 ## D-019 — Backend pivots from Supabase/Postgres to Firebase
 
 **Decision:** The live backend is Firebase (Firestore + Firebase Auth +

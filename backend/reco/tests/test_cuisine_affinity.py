@@ -1,6 +1,6 @@
 """Cuisine adjacency is a hand-built, versioned contract — lock its behavior."""
 
-from app.cuisine_affinity import CANONICAL_CUISINES, affinity, pair_affinity
+from app.cuisine_affinity import _EDGES, CANONICAL_CUISINES, affinity, pair_affinity
 
 
 def test_self_affinity_is_one() -> None:
@@ -36,3 +36,20 @@ def test_canonical_vocabulary_is_populated() -> None:
     assert "italian" in CANONICAL_CUISINES
     assert "sushi" in CANONICAL_CUISINES
     assert len(CANONICAL_CUISINES) >= 40
+
+
+def test_affinity_clamps_malformed_weights() -> None:
+    # A weight > 1 (a data error) must not push the term past 1.0.
+    assert affinity({"italian": 2.0}, ["italian"]) == 1.0
+
+
+def test_edge_map_has_no_self_loops_or_duplicates() -> None:
+    # Copy-paste guard for the hand-maintained map (D-009): a self-loop or a
+    # duplicated undirected pair is a human error worth failing on, not silently
+    # absorbing via the dedup-by-max in _build_lookup.
+    seen: set[frozenset[str]] = set()
+    for a, b, _weight in _EDGES:
+        assert a != b, f"self-loop on {a}"
+        pair = frozenset({a, b})
+        assert pair not in seen, f"duplicate edge {a}-{b}"
+        seen.add(pair)

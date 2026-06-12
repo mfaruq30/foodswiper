@@ -4,8 +4,11 @@ from app.config import DEFAULT_CONFIG
 from app.models import Mode, OpenState, RequestContext, Restaurant, UserProfile
 from app.scoring import (
     HeuristicRanker,
+    _weighted_recent_cuisines,
     beta_smoothed_score,
     price_fit,
+    proximity_score,
+    quality_score,
     score_candidate,
 )
 
@@ -97,3 +100,57 @@ def test_ranker_orders_better_match_first() -> None:
     poor = _restaurant("poor", cuisines=["bbq"], price_tier=4)
     ordered = HeuristicRanker().rank(user, _ctx(), [poor, great])
     assert [r.id for r in ordered] == ["great", "poor"]
+
+
+def test_weighted_recent_cuisines_decays_by_recency() -> None:
+    # Most-recent cuisine weighs 1.0, the next 0.85, and so on.
+    weights = _weighted_recent_cuisines(["italian", "bbq"])
+    assert weights["italian"] == 1.0
+    assert weights["bbq"] == 0.85
+    # A cuisine appearing twice keeps its most-recent (higher) weight.
+    deduped = _weighted_recent_cuisines(["italian", "bbq", "italian"])
+    assert deduped["italian"] == 1.0
+
+
+def test_swipe_pattern_match_lifts_recently_swiped_cuisine() -> None:
+    # Two otherwise-identical candidates; the user has been right-swiping sushi.
+    # The dynamic swipe-pattern term must raise the sushi candidate's score.
+    user = UserProfile(anchor_cuisines=["italian"], recent_right_cuisines=["sushi"])
+    sushi = _restaurant("sushi", cuisines=["sushi"])
+    burger = _restaurant("burger", cuisines=["burger"])
+    sushi_scored = score_candidate(sushi, user, _ctx())
+    burger_scored = score_candidate(burger, user, _ctx())
+    assert sushi_scored.components["swipe_pattern_match"] > 0.0
+    assert burger_scored.components["swipe_pattern_match"] == 0.0
+    assert sushi_scored.score > burger_scored.score
+
+
+def test_explicit_cuisine_weights_take_precedence_over_anchors() -> None:
+    # When learned cuisine_weights exist they drive ranking, not the anchors.
+    user = UserProfile(cuisine_weights={"bbq": 1.0}, anchor_cuisines=["italian"])
+    bbq = _restaurant("bbq", cuisines=["bbq"])
+    italian = _restaurant("italian", cuisines=["italian"])
+    ordered = HeuristicRanker().rank(user, _ctx(), [italian, bbq])
+    assert [r.id for r in ordered] == ["bbq", "italian"]
+
+
+def test_persisted_internal_score_overrides_live_counts() -> None:
+    # A precomputed internal_score (the decayed, weekly-recomputed posterior the
+    # data layer persists) must win over a live count recompute (D-009) — the
+    # Phase-3 wiring trap the reviewers flagged.
+    r = _restaurant("r", internal_score=0.95, impressions=100, rights=10)
+    assert quality_score(r, DEFAULT_CONFIG) == 0.95
+
+
+def test_proximity_handles_degenerate_zero_radius() -> None:
+    # A 0 m radius must score 0, not raise ZeroDivisionError.
+    ctx = RequestContext(
+        mode=Mode.DINE_IN, metro="nyc", user_lat=40.730, user_lon=-73.990, max_distance_m=0.0
+    )
+    assert proximity_score(_restaurant("r"), ctx) == 0.0
+
+
+def test_out_of_range_quality_inputs_are_clamped() -> None:
+    # A malformed persisted score outside [0,1] must not escape the bound.
+    assert quality_score(_restaurant("hi", internal_score=1.7), DEFAULT_CONFIG) == 1.0
+    assert quality_score(_restaurant("lo", popularity_prior=-0.5), DEFAULT_CONFIG) == 0.0

@@ -29,16 +29,16 @@ def passes_open(restaurant: Restaurant) -> bool:
 
 
 def passes_dietary(restaurant: Restaurant, user: UserProfile) -> bool:
-    # Every dietary flag the user requires must be present on the venue.
+    """Every dietary flag the user requires must be present on the venue."""
     return all(flag in restaurant.dietary_tags for flag in user.dietary_flags)
 
 
 def passes_price(restaurant: Restaurant, ctx: RequestContext) -> bool:
+    """Pass venues at or under the ceiling — but never hard-filter on an imputed
+    price (D-010): OSM has no price data, so an imputed tier is a guess; only a
+    real, source-backed tier can exceed the ceiling and be dropped."""
     if ctx.price_ceiling is None:
         return True
-    # Permissive-on-imputed (D-010): OSM has no price data, so an imputed tier
-    # is a guess and must never hard-filter a venue out. Only a real,
-    # source-backed price tier can exceed the ceiling.
     if restaurant.price_imputed:
         return True
     return restaurant.price_tier <= ctx.price_ceiling

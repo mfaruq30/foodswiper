@@ -3,8 +3,9 @@
 A new user has named a few anchor restaurants and picked cuisines — nothing
 else. Adjacency generalizes that thin signal: someone who loves Sichuan
 probably likes other Chinese and pan-Asian food; a trattoria lover likes
-Mediterranean. This is a hand-built, versioned map over the same ~40 canonical
-cuisine nodes the seed pipeline emits — NOT learned embeddings, which would
+Mediterranean. This is a hand-built, versioned map over the canonical cuisine
+nodes (`CANONICAL_CUISINES`, ~50, derived from the edge list below) — NOT
+learned embeddings, which would
 need interaction data we don't have at launch and would produce
 plausible-but-unvalidated neighbors. The data-driven upgrade (co-preference
 from real swipes) is a post-launch task, gated on data volume.
@@ -150,4 +151,7 @@ def affinity(weighted_cuisines: dict[str, float], candidate_cuisines: list[str])
     for user_cuisine, weight in weighted_cuisines.items():
         for candidate_cuisine in candidate_cuisines:
             best = max(best, weight * pair_affinity(user_cuisine, candidate_cuisine))
-    return best
+    # Clamp the upper bound: weights are documented as [0, 1], but this is the
+    # trust boundary — a malformed weight > 1 must not push the cuisine term
+    # (and the composite score) out of range. Lower bound is 0 by construction.
+    return min(1.0, best)

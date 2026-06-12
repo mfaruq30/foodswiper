@@ -19,6 +19,17 @@ from .models import OpenState, RequestContext, Restaurant, ScoredCandidate, User
 _RECENT_DECAY = 0.85
 
 
+def _clamp01(value: float) -> float:
+    """Clamp to [0, 1].
+
+    Used at the trust boundary where externally-supplied data (a persisted
+    score, an open-data prior, a cuisine weight) enters the composite. The
+    docstrings promise every term is in [0, 1]; this makes that a guarantee
+    rather than a convention a Phase-3 data adapter could violate.
+    """
+    return min(1.0, max(0.0, value))
+
+
 def beta_smoothed_score(rights: int, impressions: int, mean: float, strength: float) -> float:
     """Bayesian-smoothed right-swipe rate (DECISIONS.md D-009).
 
@@ -65,6 +76,11 @@ def price_fit(restaurant: Restaurant, user: UserProfile, config: ScoringConfig) 
 def proximity_score(restaurant: Restaurant, ctx: RequestContext) -> float:
     """Closer is better, linear to the range edge. For delivery this distance
     is the lawful free proxy for ETA (no provider API exists — D-010)."""
+    # A non-positive radius is a degenerate request (e.g. a bad client param);
+    # score 0 rather than divide by zero. score_candidate is callable on its own,
+    # so this cannot lean on passes_range having run upstream.
+    if ctx.max_distance_m <= 0:
+        return 0.0
     distance = haversine_m(ctx.user_lat, ctx.user_lon, restaurant.lat, restaurant.lon)
     return max(0.0, 1.0 - distance / ctx.max_distance_m)
 
@@ -72,8 +88,16 @@ def proximity_score(restaurant: Restaurant, ctx: RequestContext) -> float:
 def quality_score(restaurant: Restaurant, config: ScoringConfig) -> float:
     """Munch-owned swipe signal once it exists, else the open-data prior.
 
-    Never a scraped third-party rating — this is the moat (spec §7.3).
+    Precedence (DECISIONS.md D-009): a precomputed `internal_score` — the
+    weekly-recomputed, decayed Beta posterior the data layer persists — wins
+    when present; otherwise the posterior is recomputed live from raw counts;
+    otherwise the open-data popularity prior carries cold start. Preferring the
+    stored value closes a Phase-3 trap: a Firestore adapter that populates
+    `internal_score` would otherwise have zero ranking effect. Never a scraped
+    third-party rating — this is the moat (spec §7.3).
     """
+    if restaurant.internal_score is not None:
+        return _clamp01(restaurant.internal_score)
     if restaurant.internal_impressions > 0:
         return beta_smoothed_score(
             restaurant.internal_rights,
@@ -81,7 +105,7 @@ def quality_score(restaurant: Restaurant, config: ScoringConfig) -> float:
             config.score_prior_mean,
             config.score_prior_strength,
         )
-    return restaurant.popularity_prior
+    return _clamp01(restaurant.popularity_prior)
 
 
 def score_candidate(

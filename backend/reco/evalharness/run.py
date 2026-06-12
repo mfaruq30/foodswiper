@@ -5,10 +5,14 @@ metrics table, writes it to docs/ALGORITHM.md, and enforces the gate:
 
   random floor  <  heuristic  <  oracle ceiling   (on NDCG@5)
 
-The heuristic beating random proves the scorer and plumbing work; staying
-below the oracle proves the simulator hides signal as designed (D-007). If
-the heuristic does NOT beat random by the margin, the run fails — that is the
-regression guard, not a flaky test.
+NDCG is graded against the CLEAN true-utility signal (simulator.py). The oracle
+ranks by that same signal, so it tops out at 1.0 by definition — an idealized
+perfect-knowledge reference, not a production target. The heuristic sits below
+it because it sees only a thin projection of taste (anchors + adjacency, not
+each user's full per-cuisine vector) plus a hidden vibe term, NOT because of any
+single recoverable feature (D-007 / D-020). The heuristic beating random proves
+the scorer and plumbing work; if it does not beat random by the margin, the run
+fails — that is the regression guard, not a flaky test.
 """
 
 from __future__ import annotations
@@ -64,7 +68,8 @@ def _heuristic_ranker() -> Ranker:
 
 
 def _oracle_ranker() -> Ranker:
-    # Sees the latent utility directly — the achievable ceiling, not shippable.
+    # Ranks by the clean true-utility signal — an idealized perfect-knowledge
+    # reference (NDCG 1.0 by definition), never shippable.
     def rank(instance: EvalInstance) -> list[str]:
         return sorted(instance.relevance, key=lambda i: instance.relevance[i], reverse=True)
 
@@ -132,6 +137,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
     parser.add_argument("--users", type=int, default=DEFAULT_USERS)
     parser.add_argument("--venues", type=int, default=DEFAULT_VENUES)
+    parser.add_argument(
+        "--no-doc",
+        action="store_true",
+        help="skip rewriting docs/ALGORITHM.md (used by tests so runs stay clean)",
+    )
     args = parser.parse_args(argv)
 
     rng = random.Random(args.seed)
@@ -147,7 +157,8 @@ def main(argv: list[str] | None = None) -> int:
 
     table = _format_table(results)
     print(table)
-    _write_algorithm_doc(table, args.seed, args.users, args.venues)
+    if not args.no_doc:
+        _write_algorithm_doc(table, args.seed, args.users, args.venues)
 
     floor = results["random"]["ndcg@5"]
     heuristic = results["heuristic"]["ndcg@5"]
@@ -165,11 +176,11 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 1
     if heuristic >= ceiling:
-        # The oracle uses hidden signal, so the heuristic reaching it means the
-        # simulator failed to hide anything — the harness would be circular.
+        # The oracle ranks by the clean true signal, so a heuristic reaching it
+        # would mean grading had become circular (D-007 / D-020 violated).
         print(
             f"GATE FAILED: heuristic NDCG@5 {heuristic:.3f} >= oracle {ceiling:.3f}; "
-            "simulator is not hiding signal (D-007 violated)",
+            "grading is circular (D-020 violated)",
             file=sys.stderr,
         )
         return 1

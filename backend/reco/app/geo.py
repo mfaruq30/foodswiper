@@ -1,4 +1,11 @@
-"""Geographic helper (pure, unit-tested). Mirrors the seed pipeline's geo math."""
+"""Geographic helper (pure, unit-tested).
+
+An intentional independent copy of the seed pipeline's ``haversine_m``
+(backend/supabase/seed): the two packages deploy separately with separate
+venvs, and reco stays DB-agnostic. There is NO runtime coupling and nothing
+enforces the two stay identical — if either is ever tuned, change both
+deliberately.
+"""
 
 from __future__ import annotations
 
