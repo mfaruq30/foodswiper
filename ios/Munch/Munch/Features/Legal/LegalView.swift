@@ -71,6 +71,7 @@ struct LegalView: View {
 
     // MARK: - Privacy (summarizes legal/privacy-policy.md)
 
+    // swiftformat:disable indent -- string interiors are content, not code
     private static let privacySections: [LegalSection] = [
         LegalSection(
             heading: "What we collect",
@@ -174,6 +175,7 @@ struct LegalView: View {
                 """
         ),
     ]
+    // swiftformat:enable indent
 }
 
 // MARK: - Supporting model

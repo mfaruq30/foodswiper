@@ -11,6 +11,7 @@ struct DataSourcesView: View {
     /// constant and known-valid, so the force unwrap cannot fail at runtime.
     private static let osmCopyright = URL(string: "https://www.openstreetmap.org/copyright")!
 
+    // swiftformat:disable indent -- string interiors are content, not code
     private static let osmDetail = """
         Restaurant names, locations, cuisines, and dietary tags come from \
         OpenStreetMap, used under the Open Database License (ODbL).
@@ -25,6 +26,7 @@ struct DataSourcesView: View {
         Boston food establishment licenses come from Analyze Boston, published \
         under the Public Domain Dedication and License (PDDL).
         """
+    // swiftformat:enable indent
 
     var body: some View {
         ScrollView {
