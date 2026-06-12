@@ -63,22 +63,26 @@ class InMemoryVenueRepository:
         return cls([restaurant_from_canonical(r) for r in records])
 
     def find_candidates(self, ctx: RequestContext) -> list[Restaurant]:
-        # hard_filter applies metro + range (+ open). Dietary/price are
-        # user-specific and applied again at deck time with the real profile;
-        # passing an empty profile here keeps retrieval profile-independent,
-        # mirroring what a database range query can actually do.
+        # Retrieval is profile-independent (an empty profile here), mirroring
+        # what a database range query can actually do. The CALLER (post_deck)
+        # owns re-applying the user's dietary/price constraints — see the
+        # hard_filter call in main.py.
         return hard_filter(self._venues, UserProfile(), ctx)
 
     def get_by_ids(self, ids: list[str]) -> list[Restaurant]:
         return [self._by_id[i] for i in ids if i in self._by_id]
 
     def search_by_name(self, metro: str, query: str, limit: int) -> list[Restaurant]:
+        # PREFIX-only on purpose: Firestore can only do prefix scans, and the
+        # demo must not promise search semantics production cannot deliver —
+        # the weaker contract is the contract (Phase 3 review).
         needle = query.strip().lower()
         if not needle:
             return []
-        matches = [v for v in self._venues if v.metro == metro and needle in v.name.lower()]
-        # Prefix matches first — autocomplete UX — then alphabetical for stability.
-        matches.sort(key=lambda v: (not v.name.lower().startswith(needle), v.name.lower()))
+        matches = [
+            v for v in self._venues if v.metro == metro and v.name.lower().startswith(needle)
+        ]
+        matches.sort(key=lambda v: v.name.lower())
         return matches[:limit]
 
 

@@ -7,11 +7,12 @@ FROM python:3.12-slim
 
 WORKDIR /srv
 
-# Install the package itself (hatchling build) — no requirements.txt drift.
+# Install the package + the firestore extra (production backend, D-019) —
+# no requirements.txt drift. The memory-mode demo runs from source instead.
 COPY pyproject.toml ./
 COPY app ./app
 COPY evalharness ./evalharness
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir ".[firestore]"
 
 # Cloud Run injects $PORT; 8080 is the convention for local `docker run`.
 ENV PORT=8080

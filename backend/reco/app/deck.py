@@ -21,7 +21,7 @@ import random
 from dataclasses import dataclass
 
 from .config import DEFAULT_CONFIG, ScoringConfig
-from .models import RequestContext, Restaurant, UserProfile
+from .models import OpenState, RequestContext, Restaurant, UserProfile
 from .scoring import score_candidate
 
 DECK_SIZE = 10
@@ -41,13 +41,16 @@ class DeckCard:
 
 
 def _thompson_quality(restaurant: Restaurant, config: ScoringConfig, rng: random.Random) -> float:
-    """A posterior draw for the venue's quality instead of its mean (D-009)."""
-    alpha = config.score_prior_mean * config.score_prior_strength + restaurant.internal_rights
-    beta = (
-        (1.0 - config.score_prior_mean) * config.score_prior_strength
-        + restaurant.internal_impressions
-        - restaurant.internal_rights
-    )
+    """A posterior draw for the venue's quality instead of its mean (D-009).
+
+    Rights are clamped to impressions at the data boundary: corrupt counters
+    (rights > impressions) would otherwise drive beta toward the 1e-9 floor and
+    pin every draw at exactly 1.0 — a silent, permanent top-of-deck.
+    """
+    impressions = max(0, restaurant.internal_impressions)
+    rights = max(0, min(restaurant.internal_rights, impressions))
+    alpha = config.score_prior_mean * config.score_prior_strength + rights
+    beta = (1.0 - config.score_prior_mean) * config.score_prior_strength + impressions - rights
     return rng.betavariate(max(alpha, 1e-9), max(beta, 1e-9))
 
 
@@ -58,16 +61,33 @@ def _exploit_order(
     config: ScoringConfig,
     rng: random.Random,
 ) -> list[tuple[Restaurant, float]]:
-    """Heuristic score with the quality term resampled via Thompson draw."""
+    """Heuristic score, with the quality term resampled via a Thompson draw —
+    but ONLY for venues that have swipe evidence to resample.
+
+    Why the guard: at launch every venue has zero impressions, and substituting
+    a prior-only Beta draw for the quality component would replace the
+    open-data popularity prior with pure noise (and, interacting with the
+    unknown-hours penalty, actually INVERT it — verified by simulation in the
+    Phase 3 review). Cold venues keep their deterministic prior; exploration
+    slots, not score noise, are the cold-exposure mechanism (D-009).
+    """
     ordered: list[tuple[Restaurant, float]] = []
     for candidate in candidates:
         scored = score_candidate(candidate, user, ctx, config)
-        # Replace the deterministic quality component with a posterior draw,
-        # keeping the other components and their weights untouched.
-        adjustment = config.weights.quality_prior * (
-            _thompson_quality(candidate, config, rng) - scored.components["quality_prior"]
-        )
-        ordered.append((candidate, scored.score + adjustment))
+        adjusted = scored.score
+        if candidate.internal_impressions > 0:
+            # The penalty multiplies the whole composite in score_candidate, so
+            # the substituted draw must carry the same factor or the swap
+            # changes more than the quality term.
+            penalty = (
+                config.unknown_hours_penalty if candidate.open_state is OpenState.UNKNOWN else 1.0
+            )
+            adjusted += (
+                penalty
+                * config.weights.quality_prior
+                * (_thompson_quality(candidate, config, rng) - scored.components["quality_prior"])
+            )
+        ordered.append((candidate, adjusted))
     ordered.sort(key=lambda pair: pair[1], reverse=True)
     return ordered
 

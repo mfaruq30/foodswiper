@@ -2,8 +2,8 @@
 
 Geospatial retrieval = geohash range queries (app.geohash.query_bounds) plus
 the mandatory exact-haversine post-filter — Firestore has no native radius
-query. Requires the composite index (metro ASC, geohash ASC); declared in
-firestore.indexes.json at the repo root.
+query. Requires the composite index (metro ASC, is_active ASC, geohash ASC);
+declared in firestore.indexes.json at the repo root.
 
 Collections (mirrors DATA_MODEL.md, Firestore edition):
   venues/{id}            — canonical venue docs (from venues.ndjson)
@@ -204,11 +204,27 @@ class FirestoreEventLog:
                 batch.commit()
 
 
+def build_firestore_backend(
+    project_id: str,
+) -> tuple[FirestoreVenueRepository, FirestoreProfileStore, FirestoreEventLog]:
+    """Construct the production adapter set — the ONLY place a Firestore
+    client is built, so the composition root (main) never imports
+    google.cloud (D-019 seam)."""
+    from google.cloud import firestore as fs
+
+    client = fs.Client(project=project_id)
+    return (
+        FirestoreVenueRepository(client),
+        FirestoreProfileStore(client),
+        FirestoreEventLog(client),
+    )
+
+
 class FirebaseTokenVerifier:
-    """TokenVerifier over Firebase ID tokens (firebase_admin).
+    """TokenVerifier AND AccountDeleter over firebase_admin.
 
     Isolated here so the partially-typed firebase_admin package never leaks
-    past the port. Swapping auth providers later = a new TokenVerifier.
+    past the ports. Swapping auth providers later = a new TokenVerifier.
     """
 
     def __init__(self, project_id: str) -> None:

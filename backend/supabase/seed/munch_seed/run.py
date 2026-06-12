@@ -55,7 +55,9 @@ def _download_pbf(metro: str, cache_dir: Path) -> Path:
     return target
 
 
-def seed_metro(metro: str, cache_dir: Path, out_dir: Path, db_url: str | None) -> tuple[int, int]:
+def seed_metro(
+    metro: str, cache_dir: Path, out_dir: Path, ndjson_path: Path, db_url: str | None
+) -> tuple[int, int]:
     """Run the full pipeline for one metro; returns (venues, inspection records)."""
     run_started_at = datetime.now(UTC).isoformat()
 
@@ -75,10 +77,10 @@ def seed_metro(metro: str, cache_dir: Path, out_dir: Path, db_url: str | None) -
     ]
     print(f"[{metro}] curated venues: {len(venues)} (matched: {len(match_rows)})")
 
-    # The canonical, backend-neutral artifact every writer consumes (D-019).
+    # The canonical, backend-neutral artifact every writer consumes (D-019);
+    # main() owns the .part-then-promote lifecycle of the path passed in.
     from .canonical import append_ndjson
 
-    ndjson_path = out_dir / "venues.ndjson"
     append_ndjson(venues, ndjson_path)
     print(f"[{metro}] appended {len(venues)} records to {ndjson_path}")
 
@@ -107,17 +109,28 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
 
+    if args.load_firestore:
+        # Fail fast: the firestore extra is optional, and discovering it is
+        # missing AFTER a 300-470 MB download + extraction would burn the run.
+        import importlib.util
+
+        if importlib.util.find_spec("google.cloud.firestore") is None:
+            parser.error("--load-firestore requires: uv pip install -e .[firestore]")
+
     metros = args.metros or list(METRO_BOUNDS)
     db_url = os.environ.get("SUPABASE_DB_URL") or None
 
-    # Fresh canonical artifact per full run; per-metro stages append to it.
+    # The canonical artifact builds under a .part name and is renamed only
+    # after every metro passes its floors — a crashed or floor-failed run can
+    # never leave a coherent-looking half-artifact at the canonical path.
     ndjson_path = args.out_dir / "venues.ndjson"
-    if ndjson_path.exists():
-        ndjson_path.unlink()
+    part_path = args.out_dir / "venues.ndjson.part"
+    if part_path.exists():
+        part_path.unlink()
 
     failed = False
     for metro in metros:
-        venues, inspections = seed_metro(metro, args.cache_dir, args.out_dir, db_url)
+        venues, inspections = seed_metro(metro, args.cache_dir, args.out_dir, part_path, db_url)
         if venues < MIN_VENUES_PER_METRO:
             print(
                 f"[{metro}] ERROR: only {venues} venues (< {MIN_VENUES_PER_METRO}); "
@@ -134,15 +147,21 @@ def main(argv: list[str] | None = None) -> int:
             )
             failed = True
 
-    if args.load_firestore and not failed:
+    if failed:
+        print(f"[artifact] left at {part_path} (floors failed; not promoted)", file=sys.stderr)
+        if args.load_firestore:
+            print("[firestore] SKIPPED: not loading bad data", file=sys.stderr)
+        return 1
+
+    part_path.replace(ndjson_path)
+    print(f"[artifact] promoted {ndjson_path}")
+
+    if args.load_firestore:
         from .firestore_writer import load_ndjson_to_firestore
 
         upserted, tombstoned = load_ndjson_to_firestore(ndjson_path, args.load_firestore)
         print(f"[firestore] upserted {upserted}, tombstoned {tombstoned} ({args.load_firestore})")
-    elif args.load_firestore:
-        print("[firestore] SKIPPED: run failed its floors; not loading bad data", file=sys.stderr)
-
-    return 1 if failed else 0
+    return 0
 
 
 if __name__ == "__main__":

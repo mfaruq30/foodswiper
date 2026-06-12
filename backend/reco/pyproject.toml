@@ -10,17 +10,25 @@ dependencies = [
     "fastapi>=0.115",
     "pydantic>=2.7",
     "uvicorn[standard]>=0.30",
-    "google-cloud-firestore>=2.19", # production backend (D-019, food-5eb2a)
-    "firebase-admin>=6.5",          # ID-token verification + auth-account deletion
 ]
 
 [project.optional-dependencies]
+# Production backend (D-019, food-5eb2a). Optional so the MUNCH_BACKEND=memory
+# $0 demo image skips ~40MB of grpc/google deps; all imports are lazy, and the
+# Dockerfile installs .[firestore] for production.
+firestore = [
+    "google-cloud-firestore>=2.19",
+    "firebase-admin>=6.5",
+]
 dev = [
     "ruff>=0.8",
     "mypy>=1.13",
     "pytest>=8.3",
     "pytest-cov>=6.0",
     "httpx>=0.28", # transport for FastAPI's TestClient
+    # The firestore extra is included so mypy --strict checks the adapter.
+    "google-cloud-firestore>=2.19",
+    "firebase-admin>=6.5",
 ]
 
 [build-system]

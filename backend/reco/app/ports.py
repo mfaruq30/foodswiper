@@ -31,13 +31,20 @@ class StoredProfile:
 
 @dataclass(slots=True)
 class SwipeEvent:
-    """One swipe, exactly as logged (D-008: position + explore are mandatory)."""
+    """One swipe, exactly as logged (D-008: position + explore are mandatory).
+
+    `request_id` joins the swipe back to its served deck (reco_events row) —
+    THE training-label join key. Without it, deck attribution degrades to
+    uid+venue+timestamp heuristics that break whenever a venue is re-served;
+    and it cannot be backfilled after launch.
+    """
 
     uid: str
     restaurant_id: str
     mode: Mode
     direction: str  # 'left' | 'right'
     session_id: str
+    request_id: str
     card_position: int
     explore: bool
 
@@ -121,3 +128,15 @@ class TokenVerifier(Protocol):
     """
 
     def verify(self, token: str) -> str: ...
+
+
+class AccountDeleter(Protocol):
+    """Deletes the AUTH PROVIDER's account record (part of the D-013 purge).
+
+    Declared explicitly — not duck-typed off the verifier — because account
+    deletion is a compliance contract (Apple 5.1.1(v)), and in Phase 6 the
+    implementation must also revoke the Apple SIWA token (TN3194) before
+    removing the Firebase user.
+    """
+
+    def delete_user(self, uid: str) -> None: ...

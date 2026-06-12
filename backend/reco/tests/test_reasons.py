@@ -41,10 +41,27 @@ def test_adjacent_cuisine_is_named_as_a_cousin() -> None:
     assert "Sushi" in reason
 
 
-def test_crowd_signal_used_when_no_taste_link() -> None:
+def test_crowd_signal_is_honest_global_phrasing() -> None:
     user = UserProfile(anchor_cuisines=["mexican"])
     reason = templated_reason(_restaurant("german", internal_score=0.87), user, _ctx())
     assert "87%" in reason
+    # internal_score is a GLOBAL signal — the reason must never claim it is
+    # conditioned on this user's taste (Phase 3 review: honesty contract).
+    assert "your taste" not in reason
+
+
+def test_weak_learned_weight_never_claims_love() -> None:
+    # A 0.05 learned weight is interest, not love — "You love X" must not fire.
+    user = UserProfile(cuisine_weights={"german": 0.05})
+    reason = templated_reason(_restaurant("german"), user, _ctx())
+    assert "You love" not in reason
+
+
+def test_anchor_keeps_love_claim_even_with_learned_weights() -> None:
+    # Anchors are restaurants the user literally named — union, not fallback.
+    user = UserProfile(anchor_cuisines=["german"], cuisine_weights={"sushi": 0.9})
+    reason = templated_reason(_restaurant("german"), user, _ctx())
+    assert "You love German" in reason
 
 
 def test_fallback_is_still_specific() -> None:

@@ -32,11 +32,24 @@ def _miles(meters: float) -> str:
     return f"{meters / 1609.34:.1f} mi"
 
 
+# A learned cuisine weight below this is interest, not love — "You love X"
+# must never be claimed off a 0.05 weight (reasons stay honest, always).
+_LOVE_THRESHOLD = 0.5
+
+
 def templated_reason(restaurant: Restaurant, user: UserProfile, ctx: RequestContext) -> str:
     """The strongest honest claim available, in priority order:
     taste match > taste adjacency > proven crowd signal > proximity."""
     distance = _miles(haversine_m(ctx.user_lat, ctx.user_lon, restaurant.lat, restaurant.lon))
-    loved = list(user.cuisine_weights) or user.anchor_cuisines
+    # "Loved" = anchors (the user literally named those restaurants) UNION
+    # strong learned weights — union, not fallback, so an anchored cuisine
+    # keeps its taste-match reason after learned weights appear.
+    loved = list(
+        dict.fromkeys(
+            user.anchor_cuisines
+            + [c for c, w in user.cuisine_weights.items() if w >= _LOVE_THRESHOLD]
+        )
+    )
 
     direct = next((c for c in restaurant.cuisines if c in loved), None)
     if direct:
@@ -50,8 +63,11 @@ def templated_reason(restaurant: Restaurant, user: UserProfile, ctx: RequestCont
             return f"Into {_label(user_cuisine)}? {_label(neighbor)} is a close cousin — {distance}"
 
     if restaurant.internal_score is not None and restaurant.internal_score >= 0.6:
+        # internal_score is a GLOBAL smoothed right-swipe estimate — phrase it
+        # as a crowd signal, never as "people with your taste" (it is not
+        # conditioned on this user's taste; that claim would be fabricated).
         percent = round(restaurant.internal_score * 100)
-        return f"{percent}% of people with your taste liked this — {distance} away"
+        return f"{percent}% of Munchers who saw this liked it — {distance} away"
 
     primary = _label(restaurant.cuisines[0]) if restaurant.cuisines else "A local spot"
     return f"{primary} worth a look, just {distance} from you"

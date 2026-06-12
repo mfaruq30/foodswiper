@@ -851,26 +851,32 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },
-    { name = "firebase-admin" },
-    { name = "google-cloud-firestore" },
     { name = "pydantic" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
 [package.optional-dependencies]
 dev = [
+    { name = "firebase-admin" },
+    { name = "google-cloud-firestore" },
     { name = "httpx" },
     { name = "mypy" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
 ]
+firestore = [
+    { name = "firebase-admin" },
+    { name = "google-cloud-firestore" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.115" },
-    { name = "firebase-admin", specifier = ">=6.5" },
-    { name = "google-cloud-firestore", specifier = ">=2.19" },
+    { name = "firebase-admin", marker = "extra == 'dev'", specifier = ">=6.5" },
+    { name = "firebase-admin", marker = "extra == 'firestore'", specifier = ">=6.5" },
+    { name = "google-cloud-firestore", marker = "extra == 'dev'", specifier = ">=2.19" },
+    { name = "google-cloud-firestore", marker = "extra == 'firestore'", specifier = ">=2.19" },
     { name = "httpx", marker = "extra == 'dev'", specifier = ">=0.28" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13" },
     { name = "pydantic", specifier = ">=2.7" },
@@ -879,7 +885,7 @@ requires-dist = [
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["firestore", "dev"]
 
 [[package]]
 name = "mypy"

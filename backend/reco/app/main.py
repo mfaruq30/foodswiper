@@ -15,14 +15,16 @@ import time
 import uuid
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, HTTPException, Request
-from pydantic import BaseModel, Field
+from fastapi import Depends, FastAPI, HTTPException
+from pydantic import BaseModel, Field, field_validator
 
 from .auth import DevTokenVerifier, require_uid
 from .deck import assemble_deck
+from .filters import hard_filter
 from .geo import haversine_m
 from .models import Mode, RequestContext, UserProfile
 from .ports import (
+    AccountDeleter,
     ConversionEvent,
     EventLog,
     FeedbackEvent,
@@ -37,8 +39,15 @@ from .scoring import HeuristicRanker
 
 SERVICE_VERSION = "0.3.0"
 
-# Retrieval defaults; per-request overrides are clamped to these ceilings so a
-# misbehaving client cannot request a metro-wide scan.
+# The two launch metros (spec §1). MunchKit's Metro enum mirrors this; the
+# seed pipeline's METRO_BOUNDS keys must stay in sync (one constant per
+# package — adding a metro is a deliberate cross-package change).
+SUPPORTED_METROS = ("nyc", "boston")
+_METRO_PATTERN = "^(" + "|".join(SUPPORTED_METROS) + ")$"
+
+# Retrieval defaults; requests above the ceiling are REJECTED (422 via the
+# pydantic bound below) — not silently clamped — so the client contract is
+# explicit. The cap also keeps a deck request from becoming a metro-wide scan.
 DEFAULT_RADIUS_M = 3_000.0
 MAX_RADIUS_M = 15_000.0
 
@@ -59,10 +68,20 @@ class ProfileBody(BaseModel):
     price_pref: int | None = Field(default=None, ge=1, le=4)
     dietary_flags: list[str] = Field(default_factory=list, max_length=10)
 
+    @field_validator("cuisine_weights")
+    @classmethod
+    def _weights_in_unit_interval(cls, weights: dict[str, float]) -> dict[str, float]:
+        # The scoring layer documents (and clamps) weights to [0, 1]; reject
+        # out-of-range values at the wire so bad data never persists.
+        for cuisine, weight in weights.items():
+            if not 0.0 <= weight <= 1.0:
+                raise ValueError(f"cuisine weight for {cuisine!r} must be in [0, 1]")
+        return weights
+
 
 class DeckRequest(BaseModel):
     mode: Mode
-    metro: str = Field(pattern="^(nyc|boston)$")
+    metro: str = Field(pattern=_METRO_PATTERN)
     lat: float = Field(ge=-90, le=90)
     lon: float = Field(ge=-180, le=180)
     radius_m: float = Field(default=DEFAULT_RADIUS_M, gt=0, le=MAX_RADIUS_M)
@@ -85,6 +104,10 @@ class DeckResponse(BaseModel):
     request_id: str
     model_version: str
     cards: list[CardResponse]
+    # Typed empty-deck signal so the client can react ("widen your search?")
+    # instead of dead-ending — dietary filters against sparse OSM diet tags
+    # can legitimately empty a deck (D-022). None when cards is non-empty.
+    empty_reason: str | None = None
 
 
 class SwipeBody(BaseModel):
@@ -92,8 +115,15 @@ class SwipeBody(BaseModel):
     mode: Mode
     direction: str = Field(pattern="^(left|right)$")
     session_id: uuid.UUID
+    # The deck's request_id (echoed from DeckResponse): the training-label
+    # join key back to reco_events (D-008). Required — unbackfillable later.
+    request_id: uuid.UUID
     card_position: int = Field(ge=0, le=50)
-    explore: bool = False
+    # Required, no default: a client silently omitting the explore flag would
+    # poison the unbiased-eval labels D-008/D-009 exist to protect. The
+    # authoritative copy lives in reco_events.explore_flags; this echo is the
+    # cross-check.
+    explore: bool
 
 
 class ConversionBody(BaseModel):
@@ -136,10 +166,13 @@ def create_app(
     profiles: ProfileStore,
     events: EventLog,
     verifier: TokenVerifier,
+    account_deleter: AccountDeleter | None = None,
     rng: random.Random | None = None,
 ) -> FastAPI:
     """Build the API with injected ports — production, demo, and tests all
-    come through here; only the adapter set differs."""
+    come through here; only the adapter set differs. `account_deleter` is
+    optional because the memory/demo backend has no auth-provider account to
+    remove; production MUST pass one (D-013)."""
     app = FastAPI(title="munch-api", version=SERVICE_VERSION)
     app.state.token_verifier = verifier
     ranker = HeuristicRanker()
@@ -196,7 +229,11 @@ def create_app(
             price_ceiling=body.price_ceiling,
         )
         user = _to_user_profile(profiles.get(uid))
-        candidates = venues.find_candidates(ctx)
+        # Retrieval is profile-independent (a range query can't know the user);
+        # the user-specific hard constraints — dietary flags, price ceiling —
+        # are applied HERE against the real profile, before assembly. Without
+        # this line a vegan user would be dealt non-vegan cards.
+        candidates = hard_filter(venues.find_candidates(ctx), user, ctx)
         cards = assemble_deck(candidates, user, ctx, deck_rng)
 
         request_id = str(uuid.uuid4())
@@ -211,9 +248,19 @@ def create_app(
                 latency_ms=int((time.monotonic() - started) * 1000),
             )
         )
+        empty_reason: str | None = None
+        if not cards:
+            # Distinguish "your dietary filter emptied this deck" from "there
+            # is nothing here" so the client can offer the right next step.
+            empty_reason = (
+                "no_dietary_matches"
+                if user.dietary_flags and venues.find_candidates(ctx)
+                else "no_candidates"
+            )
         return DeckResponse(
             request_id=request_id,
             model_version=ranker.version,
+            empty_reason=empty_reason,
             cards=[
                 CardResponse(
                     restaurant_id=c.restaurant.id,
@@ -241,6 +288,7 @@ def create_app(
                 mode=body.mode,
                 direction=body.direction,
                 session_id=str(body.session_id),
+                request_id=str(body.request_id),
                 card_position=body.card_position,
                 explore=body.explore,
             )
@@ -282,21 +330,20 @@ def create_app(
     ) -> list[SearchResult]:
         # Onboarding anchor autocomplete — against Munch's own inventory only
         # (spec §6.2: no external API, no key).
-        if metro not in ("nyc", "boston"):
+        if metro not in SUPPORTED_METROS:
             raise HTTPException(status_code=422, detail="unknown metro")
         results = venues.search_by_name(metro, q, min(max(limit, 1), 25))
         return [SearchResult(restaurant_id=r.id, name=r.name, cuisines=r.cuisines) for r in results]
 
     @app.delete("/v1/account")
-    def delete_account(request: Request, uid: str = Depends(require_uid)) -> dict[str, str]:
-        # Full purge (D-013): events first, then profile, then the auth account
-        # if the verifier manages one. FUTURE(Phase 6): Apple SIWA token
+    def delete_account(uid: str = Depends(require_uid)) -> dict[str, str]:
+        # Full purge (D-013): events first, then profile, then the auth
+        # provider's account record. FUTURE(Phase 6): Apple SIWA token
         # revocation (TN3194) goes here, BEFORE the auth-account deletion.
         events.delete_user_events(uid)
         profiles.delete(uid)
-        deleter = getattr(request.app.state.token_verifier, "delete_user", None)
-        if callable(deleter):
-            deleter(uid)
+        if account_deleter is not None:
+            account_deleter.delete_user(uid)
         return {"status": "deleted"}
 
     return app
@@ -308,17 +355,23 @@ def _build_production_app() -> FastAPI:
     MUNCH_BACKEND=memory  -> ndjson venues, in-memory events (the $0 demo)
     MUNCH_BACKEND=firestore -> project food-5eb2a via Admin SDK (default)
     MUNCH_AUTH=dev        -> token==uid (demo only; default is Firebase)
+
+    All Firebase/Firestore construction lives in adapters.firestore — this
+    function never imports google.cloud or firebase_admin (D-019 seam).
     """
     backend = os.environ.get("MUNCH_BACKEND", "firestore")
     project_id = os.environ.get("FIREBASE_PROJECT_ID", "food-5eb2a")
 
     verifier: TokenVerifier
+    account_deleter: AccountDeleter | None = None
     if os.environ.get("MUNCH_AUTH", "firebase") == "dev":
         verifier = DevTokenVerifier()
     else:
         from .adapters.firestore import FirebaseTokenVerifier
 
-        verifier = FirebaseTokenVerifier(project_id)
+        firebase_verifier = FirebaseTokenVerifier(project_id)
+        verifier = firebase_verifier
+        account_deleter = firebase_verifier
 
     if backend == "memory":
         from .adapters.memory import (
@@ -333,22 +386,18 @@ def _build_production_app() -> FastAPI:
             profiles=InMemoryProfileStore(),
             events=InMemoryEventLog(),
             verifier=verifier,
+            account_deleter=account_deleter,
         )
 
-    from google.cloud import firestore
+    from .adapters.firestore import build_firestore_backend
 
-    from .adapters.firestore import (
-        FirestoreEventLog,
-        FirestoreProfileStore,
-        FirestoreVenueRepository,
-    )
-
-    client = firestore.Client(project=project_id)
+    venues, profiles, events = build_firestore_backend(project_id)
     return create_app(
-        venues=FirestoreVenueRepository(client),
-        profiles=FirestoreProfileStore(client),
-        events=FirestoreEventLog(client),
+        venues=venues,
+        profiles=profiles,
+        events=events,
         verifier=verifier,
+        account_deleter=account_deleter,
     )
 
 

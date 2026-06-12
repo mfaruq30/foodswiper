@@ -1,5 +1,35 @@
 # Munch — Decision Log
 
+## D-022 — Dietary filtering: typed empty-deck signal, sparse-tag reality
+
+**Decision:** Dietary flags are HARD filters (a safety feature), re-applied
+with the real profile in the deck endpoint. Because OSM `diet:*` tags are
+sparse (measured in the NYC seed: vegan 63/800, vegetarian 64, gluten_free 33,
+halal 16, kosher 5), an empty deck carries a typed `empty_reason`
+("no_dietary_matches" vs "no_candidates") so the client can offer "widen your
+search?" instead of dead-ending. Phase 4 onboarding should offer only flags
+with viable coverage (vegan/vegetarian/gluten_free); kosher at 5 venues is a
+broken promise, not a feature.
+**Why:** The exact users for whom filtering is a safety feature would
+otherwise hit silent empty decks (Phase 3 review, measured against the seed).
+
+## D-021 — Geohash retrieval: latitude-aware precision selection
+
+**Decision:** `query_bounds` picks precision from the cell's SMALLER dimension
+computed at the query latitude (lat/lon bit split + cos(latitude)), with a
+local guard rejecting radii beyond the precision-1 guarantee.
+**Why (caught by adversarial review, verified by execution):** the first
+version used a static equator-width table; longitude cells shrink by
+cos(latitude) (~0.76 at NYC) and odd/even precisions split bits unevenly, so
+client radii in (~650, 1220] and (~3610, 4890] m silently dropped up to ~24%
+of in-radius venues. The default 3 km radius sat in a safe window, masking it.
+**Known cost (accepted for v1):** the 3x3-cells-at-one-precision scheme
+over-reads at unlucky radii (up to ~100x the circle's area scanned near 4 km;
+~5.8x at the 3 km default). The haversine post-filter keeps it correct; a
+geofire-style multi-cell cover (caps overshoot ~2-3x) is the post-launch
+optimization if Firestore read costs ever matter. Coverage is pinned by a
+parametrized test sweeping the cliff radii at both metros' latitudes.
+
 Deviations from the master spec, each verified against primary sources at
 kickoff (2026-06-11) before Phase 0. Format: decision, why, what it replaces.
 

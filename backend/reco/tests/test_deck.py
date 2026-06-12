@@ -101,3 +101,31 @@ def test_same_seed_same_deck() -> None:
 def test_every_card_has_a_reason() -> None:
     cards = assemble_deck(_pool(), _user(), _ctx(), random.Random(7))
     assert all(c.reason for c in cards)
+
+
+def test_cold_venues_rank_by_prior_not_noise() -> None:
+    # Launch-state regression (Phase 3 review): with zero impressions the
+    # Thompson draw must NOT replace the popularity prior — two cold venues
+    # must order deterministically by prior, every time.
+    strong = _restaurant("strong", "bbq", impressions=0, rights=0, popularity=0.9)
+    weak = _restaurant("weak", "mexican", impressions=0, rights=0, popularity=0.1)
+    for seed in range(20):
+        cards = assemble_deck(
+            [weak, strong], UserProfile(), _ctx(), random.Random(seed), explore_slots=0
+        )
+        assert next(c.restaurant.id for c in cards) == "strong", f"prior lost at seed {seed}"
+
+
+def test_corrupt_counters_cannot_pin_the_top() -> None:
+    # rights > impressions (data corruption) must not yield a permanent 1.0
+    # draw; the clamp degrades it to an ordinary strong-but-sampled venue.
+    corrupt = _restaurant("corrupt", "bbq", impressions=5, rights=100, popularity=0.5)
+    honest = _restaurant("honest", "mexican", impressions=200, rights=190, popularity=0.5)
+    wins = 0
+    for seed in range(40):
+        cards = assemble_deck(
+            [corrupt, honest], UserProfile(), _ctx(), random.Random(seed), explore_slots=0
+        )
+        if cards[0].restaurant.id == "honest":
+            wins += 1
+    assert wins > 0  # the genuinely-proven venue wins at least sometimes
