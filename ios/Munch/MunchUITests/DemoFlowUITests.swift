@@ -6,7 +6,7 @@
 import XCTest
 
 final class DemoFlowUITests: XCTestCase {
-    func testOnboardThroughSwipeToMatch() throws {
+    func testOnboardThroughSwipeToMatch() {
         let app = XCUIApplication()
         // The runner passes the backend URL via TEST_RUNNER_MUNCH_API_URL;
         // forward it into the app so one env var configures the whole stack.

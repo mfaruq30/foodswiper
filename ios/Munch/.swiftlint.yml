@@ -19,5 +19,17 @@ line_length:
   warning: 120
   error: 160
 
+# SwiftFormat (the formatter) ADDS trailing commas in multiline collections;
+# SwiftLint's default REJECTS them. One convention must win or CI is
+# unsatisfiable — we follow the formatter.
+trailing_comma:
+  mandatory_comma: true
+
+# View-builder helpers legitimately take icon/tint/label/identifier/hint.
+function_parameter_count:
+  warning: 6
+  error: 8
+
 identifier_name:
   min_length: 2 # allow conventional short names like `id`, `dx`
+  excluded: [x, y] # idiomatic geometry locals (custom Layout math)
