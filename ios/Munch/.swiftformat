@@ -3,4 +3,7 @@
 --swiftversion 5.10
 --maxwidth 120
 --indent 4
+# Leave multiline string interiors alone — legal text and reason templates
+# are content, not code; reindenting them changes the rendered text.
+--indentstrings false
 --exclude Packages/MunchKit/.build

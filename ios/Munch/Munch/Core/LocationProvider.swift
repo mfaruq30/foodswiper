@@ -60,7 +60,7 @@ final class LocationProvider: NSObject, CLLocationManagerDelegate {
     }
 
     nonisolated func locationManager(
-        _ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]
+        _: CLLocationManager, didUpdateLocations locations: [CLLocation]
     ) {
         Task { @MainActor in
             continuation?.resume(returning: locations.first)
@@ -68,7 +68,7 @@ final class LocationProvider: NSObject, CLLocationManagerDelegate {
         }
     }
 
-    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+    nonisolated func locationManager(_: CLLocationManager, didFailWithError _: Error) {
         Task { @MainActor in
             continuation?.resume(returning: nil)
             continuation = nil

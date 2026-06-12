@@ -13,7 +13,7 @@ struct CuisineSelectView: View {
 
     private let columns = [
         GridItem(.flexible(), spacing: Theme.space4),
-        GridItem(.flexible(), spacing: Theme.space4)
+        GridItem(.flexible(), spacing: Theme.space4),
     ]
 
     var body: some View {
