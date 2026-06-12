@@ -207,7 +207,9 @@ class FirestoreEventLog:
 
 def build_firestore_backend(
     project_id: str,
-) -> tuple[FirestoreVenueRepository, FirestoreProfileStore, FirestoreEventLog]:
+) -> tuple[
+    FirestoreVenueRepository, FirestoreProfileStore, FirestoreEventLog, FirestoreReasonCache
+]:
     """Construct the production adapter set — the ONLY place a Firestore
     client is built, so the composition root (main) never imports
     google.cloud (D-019 seam)."""
@@ -218,7 +220,45 @@ def build_firestore_backend(
         FirestoreVenueRepository(client),
         FirestoreProfileStore(client),
         FirestoreEventLog(client),
+        FirestoreReasonCache(client),
     )
+
+
+class FirestoreReasonCache:
+    """ReasonCache over the reason_cache collection (doc id = the composite key).
+
+    Reads in chunks of 30 (`in`-query limit); expired entries are filtered so a
+    stale reason never reaches a card. Writes are the background pre-gen job's
+    job, not this read path (D-004).
+    """
+
+    def __init__(self, client: firestore.Client) -> None:
+        self._db = client
+
+    @staticmethod
+    def _doc_id(key: tuple[str, str, str]) -> str:
+        restaurant_id, archetype, mode = key
+        return f"{restaurant_id}|{archetype}|{mode}"
+
+    def get_many(self, keys: list[tuple[str, str, str]]) -> dict[tuple[str, str, str], str]:
+        from datetime import UTC, datetime
+
+        by_doc = {self._doc_id(k): k for k in keys}
+        doc_ids = list(by_doc)
+        now = datetime.now(UTC)
+        out: dict[tuple[str, str, str], str] = {}
+        for start in range(0, len(doc_ids), 30):
+            chunk = doc_ids[start : start + 30]
+            query = self._db.collection("reason_cache").where("__name__", "in", chunk)
+            for snap in query.stream():
+                data = snap.to_dict() or {}
+                expires = data.get("expires_at")
+                if expires is not None and expires < now:
+                    continue
+                reason = data.get("reason")
+                if reason:
+                    out[by_doc[snap.id]] = str(reason)
+        return out
 
 
 class FirebaseTokenVerifier:

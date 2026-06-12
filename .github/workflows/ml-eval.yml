@@ -1,0 +1,33 @@
+# Layer 4 reproducibility gate: train the LambdaMART challenger and assert it
+# beats the heuristic champion on held-out synthetic data (D-008 / D-007).
+#
+# workflow_dispatch + path-triggered on the ranker code: training is seconds,
+# but LightGBM is a chunky wheel, so this stays off the per-push critical path.
+# A green run reproduces the ALGORITHM.md "learned > heuristic" gate evidence —
+# which is PLUMBING VALIDATION only; production promotion needs logged swipes.
+name: ml-eval
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "backend/reco/learnedranker/**"
+      - "backend/reco/app/features.py"
+      - "backend/reco/app/learned_ranker.py"
+      - ".github/workflows/ml-eval.yml"
+
+jobs:
+  train-and-gate:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+      - uses: astral-sh/setup-uv@v8.2.0
+        with:
+          python-version: "3.12"
+      - name: Train the challenger
+        working-directory: backend/reco
+        run: uv run --extra dev --extra ml -- python -m learnedranker.train
+      - name: Champion/challenger gate (exit non-zero if learned !> heuristic)
+        working-directory: backend/reco
+        run: uv run --extra dev --extra ml -- python -m learnedranker.evaluate

@@ -120,6 +120,18 @@ class EventLog(Protocol):
     def delete_user_events(self, uid: str) -> None: ...
 
 
+class ReasonCache(Protocol):
+    """Pre-generated LLM reason text, keyed by (restaurant_id, archetype, mode).
+
+    The LLM is OFF the serve path (D-004): the deck serves templated reasons
+    instantly, and this batch read swaps in a cached LLM reason ONLY where one
+    already exists. Empty cache (the $0 demo) => every card keeps its templated
+    reason, no LLM call, no key. A background job populates it.
+    """
+
+    def get_many(self, keys: list[tuple[str, str, str]]) -> dict[tuple[str, str, str], str]: ...
+
+
 class TokenVerifier(Protocol):
     """Auth seam: bearer token -> verified uid (raises on invalid).
 

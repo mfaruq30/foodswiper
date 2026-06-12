@@ -103,6 +103,18 @@ class InMemoryProfileStore:
         self._profiles.pop(uid, None)
 
 
+class InMemoryReasonCache:
+    """ReasonCache over a dict; empty by default — the $0 demo path where
+    every card keeps its templated reason. Tests pre-seed it to exercise the
+    cached-LLM override."""
+
+    def __init__(self, entries: dict[tuple[str, str, str], str] | None = None) -> None:
+        self._entries = entries or {}
+
+    def get_many(self, keys: list[tuple[str, str, str]]) -> dict[tuple[str, str, str], str]:
+        return {key: self._entries[key] for key in keys if key in self._entries}
+
+
 class InMemoryEventLog:
     """EventLog over lists — also what API tests assert against."""
 

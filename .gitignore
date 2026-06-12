@@ -38,3 +38,7 @@ Thumbs.db
 # Seed pipeline artifacts (downloads + generated SQL)
 backend/supabase/seed/.seed_cache/
 backend/supabase/seed/seed_out/
+
+# Trained learned-ranker artifact — regenerable via `learnedranker.train`
+# (the ml-eval CI lane retrains + re-gates), so never committed.
+backend/reco/models/

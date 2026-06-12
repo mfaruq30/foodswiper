@@ -18,8 +18,9 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
+from .archetype import archetype_key
 from .auth import DevTokenVerifier, require_uid
-from .deck import assemble_deck
+from .deck import DeckCard, assemble_deck
 from .filters import hard_filter
 from .geo import haversine_m
 from .models import Mode, RequestContext, UserProfile
@@ -29,6 +30,7 @@ from .ports import (
     EventLog,
     FeedbackEvent,
     ProfileStore,
+    ReasonCache,
     ServedDeck,
     StoredProfile,
     SwipeEvent,
@@ -167,18 +169,36 @@ def _to_user_profile(stored: StoredProfile | None) -> UserProfile:
     )
 
 
+def _resolve_reasons(
+    reason_cache: ReasonCache | None, cards: list[DeckCard], user: UserProfile, mode: Mode
+) -> dict[str, str]:
+    """Batch-fetch cached LLM reasons for the served cards, keyed by venue id.
+
+    Returns only the hits; the caller keeps the templated reason for misses.
+    No cache => empty dict => all templated (the $0 demo path, D-004).
+    """
+    if reason_cache is None or not cards:
+        return {}
+    archetype = archetype_key(user)
+    keys = [(card.restaurant.id, archetype, str(mode)) for card in cards]
+    hits = reason_cache.get_many(keys)
+    return {restaurant_id: reason for (restaurant_id, _, _), reason in hits.items()}
+
+
 def create_app(
     venues: VenueRepository,
     profiles: ProfileStore,
     events: EventLog,
     verifier: TokenVerifier,
     account_deleter: AccountDeleter | None = None,
+    reason_cache: ReasonCache | None = None,
     rng: random.Random | None = None,
 ) -> FastAPI:
     """Build the API with injected ports — production, demo, and tests all
     come through here; only the adapter set differs. `account_deleter` is
     optional because the memory/demo backend has no auth-provider account to
-    remove; production MUST pass one (D-013)."""
+    remove; production MUST pass one (D-013). `reason_cache` is optional —
+    absent means every card keeps its templated reason (the $0 demo, D-004)."""
     app = FastAPI(title="munch-api", version=SERVICE_VERSION)
     app.state.token_verifier = verifier
     ranker = HeuristicRanker()
@@ -242,6 +262,12 @@ def create_app(
         candidates = hard_filter(venues.find_candidates(ctx), user, ctx)
         cards = assemble_deck(candidates, user, ctx, deck_rng)
 
+        # LLM reasons stay OFF the serve path (D-004): cards already carry
+        # templated reasons; swap in a pre-generated cached reason ONLY where
+        # one exists for this (venue, taste archetype, mode). Empty cache (the
+        # $0 demo) is a no-op — no LLM call, no latency.
+        reasons = _resolve_reasons(reason_cache, cards, user, body.mode)
+
         request_id = str(uuid.uuid4())
         events.record_served_deck(
             ServedDeck(
@@ -280,7 +306,7 @@ def create_app(
                     lat=c.restaurant.lat,
                     lon=c.restaurant.lon,
                     phone=c.restaurant.phone,
-                    reason=c.reason,
+                    reason=reasons.get(c.restaurant.id, c.reason),
                     position=c.position,
                     explore=c.explore,
                 )
@@ -400,11 +426,12 @@ def _build_production_app() -> FastAPI:
 
     from .adapters.firestore import build_firestore_backend
 
-    venues, profiles, events = build_firestore_backend(project_id)
+    venues, profiles, events, reason_cache = build_firestore_backend(project_id)
     return create_app(
         venues=venues,
         profiles=profiles,
         events=events,
+        reason_cache=reason_cache,
         verifier=verifier,
         account_deleter=account_deleter,
     )

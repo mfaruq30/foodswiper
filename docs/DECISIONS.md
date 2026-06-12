@@ -1,5 +1,39 @@
 # Munch — Decision Log
 
+## D-023 — Learned ranker is the challenger, NOT promoted to serving in v1
+
+**Decision:** The LightGBM LambdaMART ranker (Layer 4) is fully built, trained,
+gated, versioned, and tested — but the **heuristic remains the production
+serve-path ranker**. The deck endpoint never loads the model in v1.
+**Why:** D-007. The model beats the heuristic on held-out *synthetic* data
+(NDCG@5 0.913 vs 0.866) only by fitting the OBSERVABLE signal better than the
+hand weights — it cannot see the hidden `vibe`, so the gap to the oracle
+(1.000) stands. Synthetic lift is not real lift; promotion requires logged
+swipes (≥50k / ≥5k mixed-label decks, spec §7.5). Serving an unpromoted model
+would ship a number we have not earned.
+**Mechanics that make promotion a config flip, not new code:** features are a
+frozen contract (`app/features.py`), serving loads any model + checks the
+contract (`app/learned_ranker.py`, returns None on mismatch or absence →
+heuristic), the champion/challenger gate is reproducible
+(`learnedranker.evaluate`, the `ml-eval` CI lane). The training data assembler
+already exposes the exact (features, label, group) shape the real
+`from_reco_events` loader will fill (D-008).
+
+## D-024 — LLM reasons via cached pre-generation, never on the serve path
+
+**Decision:** Card reasons are templated by default (app/reasons). A background
+job pre-generates Claude Haiku reasons keyed by (restaurant, **taste
+archetype**, mode) into a ReasonCache; the deck endpoint does ONE batch read
+and swaps cached text in where present. No deck request ever calls the LLM.
+**Why:** D-004 — inline Haiku at p50 ~1.5-2.5s would make the templated
+fallback the de-facto product while still paying for dead calls. Archetype
+keying (top-2 cuisines, app/archetype) collapses millions of per-user
+generations into a few hundred per-archetype ones, reused across users.
+**$0 guarantee:** no `ANTHROPIC_API_KEY` => `build_generator()` returns None =>
+the pre-gen job no-ops => the cache stays empty => every card keeps its
+templated reason. The demo never needs a key (spec §10.8). The `anthropic`
+SDK is an optional `llm` extra, imported lazily.
+
 ## D-022 — Dietary filtering: typed empty-deck signal, sparse-tag reality
 
 **Decision:** Dietary flags are HARD filters (a safety feature), re-applied

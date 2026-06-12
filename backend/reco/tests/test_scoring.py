@@ -4,12 +4,12 @@ from app.config import DEFAULT_CONFIG
 from app.models import Mode, OpenState, RequestContext, Restaurant, UserProfile
 from app.scoring import (
     HeuristicRanker,
-    _weighted_recent_cuisines,
     beta_smoothed_score,
     price_fit,
     proximity_score,
     quality_score,
     score_candidate,
+    weighted_recent_cuisines,
 )
 
 
@@ -104,11 +104,11 @@ def test_ranker_orders_better_match_first() -> None:
 
 def test_weighted_recent_cuisines_decays_by_recency() -> None:
     # Most-recent cuisine weighs 1.0, the next 0.85, and so on.
-    weights = _weighted_recent_cuisines(["italian", "bbq"])
+    weights = weighted_recent_cuisines(["italian", "bbq"])
     assert weights["italian"] == 1.0
     assert weights["bbq"] == 0.85
     # A cuisine appearing twice keeps its most-recent (higher) weight.
-    deduped = _weighted_recent_cuisines(["italian", "bbq", "italian"])
+    deduped = weighted_recent_cuisines(["italian", "bbq", "italian"])
     assert deduped["italian"] == 1.0
 
 

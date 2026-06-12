@@ -20,15 +20,24 @@ firestore = [
     "google-cloud-firestore>=2.19",
     "firebase-admin>=6.5",
 ]
+# Layer 4 training/serving (D-008). Optional so the $0 memory-mode demo and
+# core serving stay LightGBM-free — the learned ranker activates only when a
+# model file is present AND this extra is installed; otherwise heuristic.
+ml = ["lightgbm>=4.5"]
+# Layer 5 LLM reasons (D-004). Optional: with no key, templated fallback.
+llm = ["anthropic>=0.40"]
 dev = [
     "ruff>=0.8",
     "mypy>=1.13",
     "pytest>=8.3",
     "pytest-cov>=6.0",
     "httpx>=0.28", # transport for FastAPI's TestClient
-    # The firestore extra is included so mypy --strict checks the adapter.
+    # The optional extras are included so mypy --strict type-checks the
+    # adapters/training/LLM code and their tests can run in CI verify.
     "google-cloud-firestore>=2.19",
     "firebase-admin>=6.5",
+    "lightgbm>=4.5",
+    "anthropic>=0.40",
 ]
 
 [build-system]
@@ -36,7 +45,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["app", "evalharness"]
+packages = ["app", "evalharness", "learnedranker"]
 
 [tool.ruff]
 line-length = 100
@@ -59,8 +68,14 @@ python_version = "3.12"
 module = "firebase_admin.*"
 ignore_missing_imports = true
 
+# LightGBM (ml) and anthropic (llm) ship no type stubs; imported lazily behind
+# feature flags, never on the $0 demo or core serve path.
+[[tool.mypy.overrides]]
+module = ["lightgbm.*", "anthropic.*"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 # Coverage is reported from Phase 0 but a fail-under threshold is only added
 # in Phase 2 when real ranking logic exists — a threshold over stubs is theater.
-addopts = "-q --cov=app --cov=evalharness --cov-report=term-missing"
+addopts = "-q --cov=app --cov=evalharness --cov=learnedranker --cov-report=term-missing"

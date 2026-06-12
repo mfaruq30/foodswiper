@@ -42,7 +42,7 @@ def beta_smoothed_score(rights: int, impressions: int, mean: float, strength: fl
     return (rights + alpha) / (impressions + alpha + beta)
 
 
-def _weighted_recent_cuisines(recent_right_cuisines: list[str]) -> dict[str, float]:
+def weighted_recent_cuisines(recent_right_cuisines: list[str]) -> dict[str, float]:
     """Collapse a recency-ordered cuisine list into decayed weights in [0, 1]."""
     weights: dict[str, float] = {}
     for index, cuisine in enumerate(recent_right_cuisines):
@@ -50,7 +50,7 @@ def _weighted_recent_cuisines(recent_right_cuisines: list[str]) -> dict[str, flo
     return weights
 
 
-def _cuisine_weights_for_user(user: UserProfile) -> dict[str, float]:
+def cuisine_weights_for_user(user: UserProfile) -> dict[str, float]:
     """Static taste prior: explicit onboarding weights, or anchors at full weight."""
     if user.cuisine_weights:
         return user.cuisine_weights
@@ -117,9 +117,9 @@ def score_candidate(
     """Compute the full heuristic score with its per-signal breakdown."""
     weights = config.weights
     components = {
-        "cuisine_affinity": affinity(_cuisine_weights_for_user(user), restaurant.cuisines),
+        "cuisine_affinity": affinity(cuisine_weights_for_user(user), restaurant.cuisines),
         "swipe_pattern_match": affinity(
-            _weighted_recent_cuisines(user.recent_right_cuisines), restaurant.cuisines
+            weighted_recent_cuisines(user.recent_right_cuisines), restaurant.cuisines
         ),
         "price_fit": price_fit(restaurant, user, config),
         "proximity": proximity_score(restaurant, ctx),

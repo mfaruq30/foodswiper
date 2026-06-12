@@ -114,6 +114,35 @@ def test_deck_serves_cards_and_logs_the_deck() -> None:
     assert events.decks[0].explore_flags == [c["explore"] for c in deck["cards"]]
 
 
+def test_cached_llm_reason_overrides_templated() -> None:
+    # D-004: the deck serves templated reasons, but a pre-generated cached
+    # reason for (venue, archetype, mode) takes over where present. With no
+    # cache (the default _client) every reason stays templated.
+    from app.adapters.memory import InMemoryReasonCache
+    from app.archetype import archetype_key
+    from app.models import UserProfile
+
+    venues = [_venue("v1", "Lucali", "pizza")]
+    # The deck user's archetype is what the cache is keyed on.
+    archetype = archetype_key(UserProfile(anchor_cuisines=["pizza"]))
+    cache = InMemoryReasonCache({("v1", archetype, "dine_in"): "Hand-rolled, your kind of slice"})
+    app = create_app(
+        venues=InMemoryVenueRepository(venues),
+        profiles=InMemoryProfileStore(),
+        events=InMemoryEventLog(),
+        verifier=DevTokenVerifier(),
+        reason_cache=cache,
+        rng=random.Random(7),
+    )
+    client = TestClient(app)
+    client.headers["authorization"] = "Bearer test-user"
+    client.put("/v1/profile", json={"home_metro": "nyc", "anchor_cuisines": ["pizza"]})
+    deck = client.post(
+        "/v1/deck", json={"mode": "dine_in", "metro": "nyc", "lat": 40.7308, "lon": -73.9973}
+    ).json()
+    assert deck["cards"][0]["reason"] == "Hand-rolled, your kind of slice"
+
+
 def test_deck_respects_dietary_flags_and_signals_empty() -> None:
     # Regression for a real Phase 3 bug: retrieval filters with an empty
     # profile, so the endpoint MUST re-apply the user's hard constraints —
