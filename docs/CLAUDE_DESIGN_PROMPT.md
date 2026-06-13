@@ -1,427 +1,285 @@
-# Claude Design Prompt — Final Deliverable (Phase 8)
+# Munch — Claude Design Prompt (Phase 8, modern/Gen-Z direction)
 
-> **What this is.** A self-contained design brief for a *fresh* Claude (or
-> Claude Design) session with no memory of this build. It describes the Munch
-> iOS app **exactly as it ships today** — every token, component, screen, and
-> state — and asks for an elevated visual system on top. Written **last** (spec
-> §14), after every screen exists, so it documents what was actually built, not
-> what was planned. Paste everything below the line into a new session.
->
-> **Ground truth, verified.** All literal values below were read directly from
-> `ios/Munch/Munch/DesignSystem/Theme.swift`, `Components.swift`, `CardArt.swift`,
-> and the eight feature screens. The placeholder fork app icon (`tools/make_app_icon.py`)
-> is intentionally a stand-in — **producing its replacement is part of this brief.**
->
-> **⚠️ DIRECTION UPDATE — read [PASS 2](#pass-2--modern-gen-z-direction-active) at the
-> bottom FIRST.** Pass 1 steered "editorial / print zine" and came back beautiful but
-> too quiet and conservative for the actual audience (18–30s). The active aesthetic is
-> now **modern, tactile, kinetic, crave-worthy** — keep the token *names*, the warm-orange
-> DNA, the honesty rules, and SwiftUI/iOS-26 buildability, but **where Pass 2 conflicts
-> with the editorial framing below, Pass 2 wins.**
+> Self-contained brief for a fresh Claude Design session. It embeds the app's
+> actual shipped tokens/screens/components (verified from `Theme.swift`,
+> `Components.swift`, `CardArt.swift`, and the 8 feature screens) **and** every
+> design decision pre-answered, so no intake questions are needed. Paste the whole
+> thing. A first pass came back beautiful but too conservative (print-magazine
+> restraint); this version steers it to a modern, kinetic, crave-worthy app.
 
 ---
 
-## ROLE & CONTEXT
+## 1. ROLE & MISSION
 
-You are a senior product designer shaping the visual identity of **Munch**, a
-swipe-based restaurant-discovery iPhone app for New York City and Boston. The
-user sets what they're craving, then swipes through *real* nearby restaurants
-(Tinder-style) until they match on one to eat at. Think "Tinder for restaurants,"
-but warm and editorial rather than slick and cold.
+You are a senior product designer + motion designer creating the visual system for
+**Munch** — a swipe-based restaurant-discovery iPhone app for **New York City and
+Boston**, aimed at **18–30-year-olds** (launching around college campuses, BU first).
+Users set what they're craving, then swipe through *real* nearby restaurants
+Tinder-style until they match on one to eat at.
 
-The app is **already built and functional** in SwiftUI (iOS 17+, iPhone-only,
-light-mode-first). It has a real, coherent design system — your job is **not** to
-invent from scratch but to **elevate what exists**: refine the visual language,
-tighten the art direction, and design the few things that are still placeholders
-(most importantly the **cuisine card-art system**, which is the product's primary
-visual identity). Everything you produce must stay **SwiftUI-implementable** and
-respect the existing token names so an engineer can apply it without rewrites.
+The app is already built and functional in **SwiftUI (iOS 17+, targeting iOS 26),
+iPhone-only**. A real design system exists — your job is to **elevate it into
+something modern and exciting**, not invent from scratch.
 
-### Aesthetic North Star
-Warm, editorial, appetite-forward, human. Off-white "paper" canvas (never stark
-white), a confident warm-orange accent, and an editorial serif (Fraunces) for
-display type against a clean SF Pro body. The feeling: a beautifully printed
-neighborhood food zine, not a delivery-app spreadsheet.
+**The goal: modern, tactile, kinetic, crave-worthy.** It should feel like an app a
+20-year-old opens ten times a day — confident color, real depth, satisfying motion,
+and food art that makes you hungry. **Anti-goals:** (1) a quiet print-magazine /
+boutique brand book (the last pass's mistake — cream whitespace, tiny framed
+elements, monogram card art, one muted orange); (2) a generic, cold delivery app
+(Uber Eats / DoorDash are the *foil*, not the model). Munch is warm and human, but
+*alive*.
 
-### Hard constraints (non-negotiable)
-1. **SwiftUI-implementable on iOS 17.** No effects that can't be built with
-   SwiftUI primitives (gradients, shapes, `.shadow`, SF Symbols, blend modes are fine).
-2. **Light mode first.** No dark-mode variants are defined yet; if you propose
-   one, keep it additive and secondary.
-3. **Accessibility is a gate, not a nicety:** Dynamic Type must scale (don't
-   hardcode pixel type that breaks large sizes), all tap targets ≥ **44pt**, and
-   text/background pairs must meet WCAG AA contrast. Every control already carries
-   a VoiceOver label and a stable `accessibilityIdentifier` — preserve them.
-4. **Honest "Featured" treatment.** If a card is sponsored/paid placement it must
-   carry a *visible* "Featured"/"Sponsored" label. Never design a treatment that
-   disguises paid placement as an organic result. (This is also a Terms commitment.)
-5. **Reuse the token names.** Map every value you choose to the existing
-   `Theme.*` tokens below (or propose a *named* new token); no magic numbers.
-6. **Data honesty.** Match percentages come from *Munch users' swipes*, never
-   scraped third-party ratings. Don't design UI implying Yelp/Google-style review
-   data — it doesn't exist and won't.
+## 2. DECISIONS — already made (do not ask, just execute)
 
-### What to deliver
-- A refined **design-token sheet** (you may adjust values, but keep the token
-  names and the warm-editorial intent; justify any change).
-- The full **component kit**, visually specified (states included).
-- **The cuisine card-art system** as a first-class deliverable — see its section.
-- Each **screen** redrawn with all states (empty / loading / error / success).
-- A new **app icon** concept consistent with the system (replacing the placeholder).
-- Notes on **motion** (the swipe + match moments especially).
+- **Focus, in order:** (1) the **cuisine card-art system** (the product's whole visual
+  identity), (2) the **swipe deck + match moment** (the signature screens), then (3)
+  the full component kit + remaining screens.
+- **Presentation:** deliver **BOTH** — polished **device-framed screens** (so it reads
+  as a real app) **AND** a flat **design-system spec board** (tokens + components +
+  card-art system) for the engineer.
+- **Card-art directions:** produce **2** — (a) *vibrant evolution* and (b) *bold take*
+  (defined in §5). Both keep the deterministic per-cuisine rule.
+- **How far past flat gradient + emoji:** **all the way.** Kill raw emoji AND the
+  monogram. Use **mesh/layered gradients + a custom illustrated food glyph per cuisine
+  + subtle grain**. This is the single highest-impact change.
+- **Screens rendered in full:** **all key screens, every state**, prioritizing the
+  **swipe deck** and **match**.
+- **Motion:** **show it** — a **working/interactive swipe demo** and an **animated
+  match-moment reveal**; specify motion + haptics for every signature interaction.
+- **Token freedom:** **refine values where it clearly helps and expand the system**
+  (richer gradients, per-cuisine hues, a paired modern sans, an optional dark surface)
+  — but **keep the token names and the warm-orange brand DNA**, and justify changes.
+- **App icon:** deliver **2–3 bold, modern concepts** in the new card-art language
+  (drop the monogram seal).
+- **Founder context:** the founder develops on **Windows and cannot run the app**, so
+  the device-framed screens + the interactive swipe demo are how this gets judged —
+  make them feel real.
 
----
+## 3. AESTHETIC NORTH STAR + REFERENCES
 
-## DESIGN TOKENS (as shipped — the exact current values)
+Warm, appetite-forward, confident, kinetic, premium-but-playful. Match the *feeling*
+of these, don't copy them:
+- **Cash App / Spotify (Wrapped) / Partiful** — fearless saturated color, huge
+  confident type, personality over restraint.
+- **iOS 26 Liquid Glass** — translucent, frosted, depth-layered chrome (floating glass
+  tab bars, glass buttons, sheets that morph). This is the modern *native* look — lean in.
+- **Gopuff / Gorillas / modern food branding** — vivid, crave-worthy, fun.
+- **Duolingo / BeReal** — springy, characterful micro-interactions and reward moments.
+- **Airbnb / Headspace** — depth and warmth done premium, never flat.
 
-Light-mode-first. Colors are sRGB hex; the app builds them via a `Color(hex:)`
-helper. Spacing is a 4pt base scale. Display type is Fraunces (SIL OFL, bundled),
-body type is the native SF Pro stack (for Dynamic Type).
+## 4. BRAND FOUNDATIONS (shipped tokens — keep the names; expand, don't discard)
 
-### Color palette
+Light-mode-first today; **add a dark "night" mode** in this pass (food pops on dark and
+the audience leans dark). Display type is **Fraunces** (SIL OFL, bundled); body is the
+native SF Pro stack for Dynamic Type — **pair Fraunces with a clean modern
+geometric/grotesque sans** for UI labels so it reads contemporary, not bookish.
+
+**Color (current, keep as the base):**
 | Token | Hex | Role |
 |---|---|---|
-| `Theme.paper` | `#FAF6F0` | App background — warm off-white "paper" (never pure white) |
-| `Theme.surface` | `#FFFDF9` | Card / row surface — a half-step brighter than paper, for lift |
-| `Theme.ink` | `#2B2118` | Primary text (display + body) — warm near-black |
-| `Theme.inkSecondary` | `#6E5F51` | Secondary text — captions, metadata |
+| `Theme.paper` | `#FAF6F0` | App bg — warm off-white (light mode) |
+| `Theme.surface` | `#FFFDF9` | Card/row surface (light) |
+| `Theme.ink` | `#2B2118` | Primary text — warm near-black |
+| `Theme.inkSecondary` | `#6E5F51` | Secondary text |
 | `Theme.accent` | `#E8552E` | Brand warm-orange — CTAs, selection, brand moments |
-| `Theme.accentSoft` | `#FBE3DB` | Soft accent tint — chips, selected states, callouts |
-| `Theme.yes` | `#2E8B57` | "Yes" / right-swipe affirmation (green) |
-| `Theme.nope` | `#C0392B` | "Nope" / left-swipe + destructive (red) |
-| `Theme.stroke` | `#E8DFD3` | Hairlines, card borders, disabled fills (warm neutral) |
+| `Theme.accentSoft` | `#FBE3DB` | Soft accent tint |
+| `Theme.yes` | `#2E8B57` | Right-swipe affirmation (green) |
+| `Theme.nope` | `#C0392B` | Left-swipe / destructive (red) |
+| `Theme.stroke` | `#E8DFD3` | Hairlines, borders, disabled fills |
 
-### Type scale
-Display = **Fraunces** (SIL OFL, bundled), via `Theme.display(size)`, which falls
-back to system **serif `.semibold`** if the font fails to register (the UI never
-blanks). Body and smaller roles use native `.system` SF Pro for Dynamic Type.
+**Expand the palette (this pass):** keep `#E8552E` as hero, but design a **richer
+multi-stop gradient ramp** off it and **per-cuisine accent hues** (so the deck is varied,
+not one orange). Propose a **dark "night" set** — e.g. a deep warm near-black bg
+(~`#161210`), surface ~`#221C17`, text cream `#FAF6F0`, accent unchanged (pops on dark);
+finalize values for AA contrast and show both modes.
 
-| Token | Font | Size | Use |
-|---|---|---|---|
-| `Theme.munchTitle` | Fraunces (display) | 34pt | Large editorial headline ("It's a match", brand) |
-| `Theme.munchHeading` | Fraunces (display) | 24pt | Section headings, screen titles |
-| `Theme.munchCardName` | Fraunces (display) | 28pt | Restaurant name on a card |
-| `Theme.display(_:)` | Fraunces (display) | parametric | Any other display size (e.g. the 22pt deck wordmark) |
-| (system) | SF Pro | `.headline`/`.subheadline`/`.body`/`.footnote`/`.caption`/`.caption2` | All body/meta/control text |
+**Type scale (current):** `munchTitle` Fraunces 34 · `munchHeading` Fraunces 24 ·
+`munchCardName` Fraunces 28 · `Theme.display(size)` parametric. **Push display sizes
+bigger and bolder** for hero moments (sign-in, match). Body/meta = SF Pro (or your paired
+sans) at `.headline`/`.subheadline`/`.body`/`.footnote`/`.caption`.
 
-### Spacing (4pt base)
-`space2` = 4 · `space3` = 8 · `space4` = 12 · `space5` = 16 · `space6` = 24 ·
-`space7` = 32 · `space8` = 48. These are the *only* approved spacings.
+**Spacing (4pt base):** 4 · 8 · 12 · 16 · 24 · 32 · 48. **Radii:** `radiusCard` 24 ·
+`radiusControl` 14 · `radiusChip` 999 (capsule). **Elevation:** today one shadow
+(`ink` @10%, radius 18, y 8) — **add real depth** (layered/soft shadows, glass blur).
 
-### Radii
-`radiusCard` = **24pt** (cards) · `radiusControl` = **14pt** (buttons, chips-as-rounded-rect,
-callouts, alternates) · `radiusChip` = **999pt** (full capsule / pills).
+## 5. CARD-ART SYSTEM — the heart of the brief
 
-### Elevation
-One shadow token, applied wherever a card lifts off paper:
-`Theme.cardShadow` = color `ink` @ **10% opacity**, radius **18**, offset **x:0, y:8**.
-No other shadow is defined — keep elevation singular and restrained.
+Restaurant photos are ~**0% in the data**, so cards never show photos — **the card art
+IS the product's visual identity.** The current implementation (your starting point, to
+be replaced): a `LinearGradient` (`.topLeading→.bottomTrailing`) with a big centered
+**emoji** OR a letter monogram-in-a-circle, filling the top ~46% of the card. **Both the
+raw emoji and the monogram must go** — they read unfinished and corporate.
 
-### Motion (today)
-There are no centralized motion tokens; motion lives in the swipe interaction
-(below): card fly-off **0.25s**, a rotation tied to drag, and YES/NOPE stamps
-that fade in with drag distance. Treat tasteful, physical, spring-y motion on the
-swipe + match moments as in-scope to specify.
+**Build a system that is deterministic, cuisine-coherent, and crave-worthy:**
+- **Deterministic:** a venue's `id` hash picks one of N variants for its cuisine family,
+  so the same venue always looks identical and adjacent same-cuisine cards don't clone.
+- **Composition:** **near-full-bleed** art (immersive, not a small framed rectangle), a
+  **rich mesh/layered gradient** background, a **large expressive custom food glyph**
+  centered/offset, **subtle grain + a soft light bloom** for tactility, and a **gradient
+  scrim** at the bottom so name/price/reason stay legible over the art.
+- **Custom glyphs, per cuisine** (illustrated marks — clean line + fill with slight
+  dimensionality, an ownable set; NOT emoji, NOT letters): pizza = a slice; italian =
+  a pasta swirl; ramen = a steaming bowl + chopsticks; sushi = nigiri; japanese = bento;
+  chinese = takeout box / dumpling; korean = stone bowl; thai = curry bowl; mexican =
+  taco; burger = burger; american = stacked sandwich; indian = curry + naan;
+  mediterranean = olive branch / pita; middle_eastern = skewer; seafood = lobster/fish;
+  dessert = layered cake. (~35 more cuisines exist in the catalog; design a default
+  "fork/spark" glyph for unmapped ones.)
+- **Gradient families (current pairs — make them mesh/multi-stop and richer):**
+  - *Pizza / Italian / Mediterranean:* warm orange → red (`#F2A65A→#E8552E`, `#F7C59F→#D7263D`)
+  - *Asian (japanese, sushi, ramen, korean, chinese, pan-asian, noodles, vietnamese, thai, filipino):* burnt orange → maroon (`#F67B45→#9B2226`, `#FFB385→#BC4749`)
+  - *Latin (mexican, latin, caribbean, peruvian, spanish):* gold → bright red (`#F9C74F→#F3722C`, `#F8961E→#D62828`)
+  - *Plant-based (vegan, vegetarian, salad, juice):* sage → teal (`#B5C99A→#55828B`, `#CFE1B9→#718355`)
+  - *Sweet / brunch (coffee, bakery, dessert, breakfast, bagel, bubble tea):* cream → tan/brown (`#E6CCB2→#9C6644`, `#F1DCA7→#B08968`)
+  - *Seafood:* sky → ocean (`#90C2E7→#3E7CB1`, `#A9D6E5→#2A6F97`)
+  - *Default (unmapped):* warm orange → brown (`#F2A65A→#BC6C25`, `#F7B267→#99582A`)
 
----
+**The two directions to deliver:**
+- **(a) Vibrant evolution** — refined mesh gradients + the custom glyph set + grain.
+  Safe, premium, ships easily. Light + dark.
+- **(b) Bold take** — full-bleed illustrated/3D-leaning food art, **dark-surface
+  default**, maximal energy and depth (the "wow" version). Show this is still legible
+  and performant.
 
-## COMPONENT KIT (as shipped)
+## 6. COMPONENT KIT (refresh each with depth, glass, and full states)
 
-All controls enforce ≥44pt targets, VoiceOver labels, and Dynamic Type. Specify
-each component's full visual treatment and **every state**.
+All controls: ≥44pt targets, VoiceOver labels + stable `accessibilityIdentifier`,
+Dynamic Type. Show every state.
+- **PrimaryButton** — brand CTA. `accent` fill, white `.headline`, `maxWidth:.infinity`,
+  `minHeight:54`, `radiusControl`. Disabled = `stroke` fill / `inkSecondary` text. Add a
+  satisfying pressed state (scale + haptic).
+- **SecondaryButton** — outline, `ink` text, `stroke` 1.5pt border, no fill. Consider a
+  **glass** variant for use over card art.
+- **SelectableChip** — cuisine/dietary toggle. Selected = `accentSoft` fill / `accent`
+  text / `accent` border; default = `surface` / `ink` / `stroke`. Capsule, 44pt.
+- **GlassSegmentedControl (ModeTabs)** — Dine In / Pickup / Delivery as a **floating
+  Liquid-Glass** segmented control; selected segment = `accent`.
+- **ProgressDots** — onboarding step indicator; active dot 22×8 `accent`, inactive 8×8
+  `stroke`. Make the transition springy.
+- **ReasonChip** — *signature moment*: the "why this matches you" line. `sparkles` glyph +
+  text, `accentSoft` fill, `accent` text. Make it feel special, not a generic tag.
+- **PriceLabel** — `$`×tier (clamp 1–4) + `?` when imputed (estimated) — keep the honest
+  `?` legible.
+- **StateMessage** — full-screen empty/error/loading: icon + `munchHeading` title + body
+  + optional retry. Make the empty/error states **playful and on-brand**, not sterile.
+- **GlassActionButton (Pass / Like)** — circular **frosted-glass** buttons over the deck;
+  Pass = `nope` `xmark`, Like = `yes` `heart`; pulse + haptic on press.
 
-- **PrimaryButton** — brand CTA. Props: `title`, `enabled` (default true), `action`.
-  Enabled: `accent` fill, white `.headline` text. Disabled: `stroke` fill,
-  `inkSecondary` text. `maxWidth: .infinity`, `minHeight: 54`, `radiusControl`.
-- **SecondaryButton** — outline, lower weight. `ink` text, no fill,
-  `stroke` border 1.5pt, `radiusControl`, `maxWidth: .infinity`, `minHeight: 54`.
-- **SelectableChip** — toggle for cuisine/dietary multi-select. Props: `label`,
-  `emoji?`, `selected`, `action`. Selected: `accentSoft` fill, `accent` text,
-  `accent` border. Default: `surface` fill, `ink` text, `stroke` border (1.5pt).
-  Capsule, `.subheadline.weight(.medium)`, `minHeight: 44`.
-- **ProgressDots** — onboarding step indicator. Props: `total`, `current`.
-  Inactive 8×8pt `stroke` capsules; active dot 22×8pt `accent`. Label "Step N of M".
-- **ReasonChip** — *signature moment*. The AI/heuristic reason a venue matches.
-  `sparkles` SF Symbol + `.footnote.weight(.medium)` text (max 2 lines), `accentSoft`
-  fill, `accent` text, `radiusControl`. Label "Why this match: …".
-- **PriceLabel** — `$`×tier (clamped 1–4) + `?` suffix when the tier was *imputed*
-  (estimated). `.subheadline.weight(.semibold)`, `inkSecondary`. Honestly signals
-  estimated prices — keep that legible, don't hide the `?`.
-- **StateMessage** — full-screen empty/error/loading. Props: `icon` (SF Symbol),
-  `title`, `detail`, optional `retryTitle` + `retry`. Centered VStack, icon
-  `.system(size: 44)` `inkSecondary`, title `munchHeading` `ink`, detail `.body`
-  `inkSecondary`, optional PrimaryButton retry.
+## 7. SCREENS — every screen, every state (modern treatment)
 
----
+Flow: **Sign In → Onboarding (Welcome → Cuisines → Anchors → Mode) → main tabs (Swipe
+deck, Profile)**, Match sheet over the deck, Legal/Data-sources off Profile. Render all
+device-framed in both light and (where it sings) dark.
 
-## CUISINE CARD-ART SYSTEM (first-class deliverable)
+**Sign In** — centered: big bold "Munch" wordmark, tagline **"Stop deciding. Start
+eating."**, **Sign in with Apple** (Apple's button, 54pt), legal line "By continuing you
+agree to our Terms and Privacy Policy." Make the background *alive* (subtle animated
+gradient / drifting card-art bloom), not flat cream. States: idle · loading (button →
+spinner) · error (red message; a user-cancelled sign-in shows no error).
 
-**This is the product's visual identity.** Open restaurant data has ~**0.04%**
-real photo coverage, so cards do **not** show photos — they show a deterministic,
-cuisine-keyed **gradient + emoji** composition. This is the primary art direction
-of the whole app, not a fallback. Today's implementation (your starting point):
+**Onboarding — chrome:** top bar with back + ProgressDots on steps 2–4; springy
+right-to-left transitions.
+- **Welcome** — playful food-glyph motif, "Munch", tagline, **"Get started"**, helper
+  "About 90 seconds to set up." Give it energy and motion.
+- **Cuisines (gate: pick ≥5)** — heading **"What do you crave?"**, "Pick at least 5.", a
+  2-column grid of cuisine chips (each showing its custom glyph + label), a live counter
+  **"{N} of 5 picked"** that turns `accent` + a satisfying tick when satisfied, Continue
+  disabled until 5. Make selecting feel tactile (spring + haptic).
+- **Anchors (optional, high-signal)** — **"Name a few favorites"**, "Restaurants you
+  already love teach Munch your taste. This is the secret sauce." Metro segmented picker,
+  glass search field, results (≤8 rows: name, cuisines joined by " · ", add/added icon;
+  picked rows accent-tinted). States: idle (<2 chars) · loading · results · "No matches —
+  try another spelling." Picked anchors (≤5) as a horizontal chip strip. Footer "Optional
+  — but even one helps a lot." + Continue.
+- **Mode** — **"How are you eating?"**, three big cards: Dine In "Table for now",
+  Pickup "Grab and go", Delivery "To your door" (each with a custom glyph; selected =
+  accent). Submit **"Start swiping"**. States: ready · submitting (spinner) · error
+  ("Couldn't save — is the demo server running?").
 
-- **Deterministic & stable:** a venue's `id` hash picks one of **two** gradient
-  variants for its cuisine family, so the same venue always looks identical and
-  adjacent same-cuisine cards don't look cloned.
-- **Composition:** `CardArt(venueId, cuisine)` = a `LinearGradient`
-  (`.topLeading → .bottomTrailing`) under a single large centered **emoji**
-  (96pt, ~0.9 opacity). Art fills the top **~46%** of the card.
-- **Gradient families (current `(start → end)` pairs):**
-  - *Pizza / Italian / Mediterranean:* `#F2A65A→#E8552E`, `#F7C59F→#D7263D`
-  - *Asian (japanese, sushi, ramen, korean, chinese, pan-asian, noodles, vietnamese, thai, filipino):* `#F67B45→#9B2226`, `#FFB385→#BC4749`
-  - *Latin (mexican, latin, caribbean, peruvian, spanish):* `#F9C74F→#F3722C`, `#F8961E→#D62828`
-  - *Plant-based (vegan, vegetarian, salad, juice):* `#B5C99A→#55828B`, `#CFE1B9→#718355`
-  - *Sweet / brunch (coffee, bakery, dessert, breakfast, bagel, bubble tea):* `#E6CCB2→#9C6644`, `#F1DCA7→#B08968`
-  - *Seafood:* `#90C2E7→#3E7CB1`, `#A9D6E5→#2A6F97`
-  - *Default (unmapped):* `#F2A65A→#BC6C25`, `#F7B267→#99582A`
-- **Cuisine → emoji** is a fixed catalog. The 16 onboarding cuisines:
-  🍕 pizza · 🍝 italian · 🥡 chinese · 🍱 japanese · 🍣 sushi · 🍜 ramen ·
-  🍚 korean · 🥘 thai · 🌮 mexican · 🍔 burger · 🥪 american · 🍛 indian ·
-  🫒 mediterranean · 🧆 middle_eastern · 🦞 seafood · 🍰 dessert. (Plus ~35 more
-  in the extended catalog; unknown cuisines fall back to 🍽️.)
+**Swipe deck (the core screen) — make the card the immersive hero:**
+- Chrome: "Munch" wordmark + the **glass ModeTabs**; optional honest fallback-location
+  banner ("Using {metro} center — enable location for nearby picks").
+- **Card stack:** top ~3 cards, staggered with real depth; the **front card is large and
+  near-full-bleed.** Card = `surface` + `radiusCard` + layered shadow.
+- **Card anatomy:** top ~46–60% is the **cuisine card art** (§5, immersive); over a scrim:
+  restaurant **name** (`munchCardName`), a meta row (cuisine · `PriceLabel` · distance with
+  a pin glyph), and the **ReasonChip**. A **"DISCOVER"** badge marks an exploration card
+  (deliberately outside the user's usual taste). **Sponsored cards show a visible
+  "Featured" badge — honest, never disguised.**
+- **Gestures + feedback:** drag rotates the card with a **parallax tilt**; bold **YES**
+  (`yes` green) / **NOPE** (`nope` red) stamps scale + rotate in with drag distance; past
+  threshold the card **springs off with overshoot + a haptic tick**. Two **glass circular
+  56pt** buttons (Pass `xmark`, Like `heart`) mirror the gesture.
+- **States:** loading (branded spinner, "Finding spots near you…", controls hidden) ·
+  error (`wifi.exclamationmark`, "Connection trouble", retry) · empty—dietary
+  (`fork.knife`, "Nothing matches your filters here", "Try widening your search or relaxing
+  dietary filters.", no retry) · empty—exhausted (`sparkles`, "That's everyone nearby",
+  "Check back soon — or switch modes.", no retry) · active.
 
-**Your task here:** elevate this into a polished, ownable art system. Keep it
-deterministic, cuisine-coherent, SwiftUI-buildable, and appetite-forward. You may
-move beyond flat two-stop gradients (e.g. layered gradients, soft grain, abstract
-food-form shapes, a refined glyph treatment instead of raw emoji) — but it must
-degrade gracefully, stay legible behind the card's text overlay, and read
-beautifully at a glance in a fast-swiping deck. Define the families, the variant
-logic, and the glyph/illustration direction.
+**Match sheet ("It's a match") — make it a dopamine moment:** the matched card **springs
+up + scales**, a **spark/confetti burst** in the brand palette, a **success haptic**, and a
+big kinetic **"It's a match"** (oversized Fraunces) with a soft gradient bloom behind it.
+The matched venue as a large card + the reason line (accent). **Mode-specific CTAs** (each
+logs a conversion before opening): Dine-In → **Directions** + **Call** (if phone known);
+Pickup → **Find on DoorDash**; Delivery → **Find on DoorDash** + **Find on Uber Eats**.
+Then **"Also great"** (≤2 alternate rows: glyph, name, cuisine · distance) and a **"Keep
+swiping"** button. This is the screenshot people share — make it shareable.
 
----
+**Profile** — sections: **Your taste** (read-only accent chips of anchor cuisines; empty →
+"Pick favorites during onboarding") · **Dietary** (4 chips: Vegetarian, Vegan, Gluten-free,
+Halal — optimistic toggle, revert+alert on failure; footer notes coverage is sparse) ·
+**About** (Privacy Policy, Terms of Service, Data sources & attribution) · **Account**
+(Home metro value or "Not set"; **"Delete my account"** destructive → confirm dialog "This
+permanently deletes your profile and swipe history." / "Delete everything" / "Cancel" →
+"Deleting your account…" → back to onboarding) · footnote ODbL credit "Munch demo · data ©
+OpenStreetMap contributors". States: loading · error (retry) · loaded. Keep it clean but
+give it the same modern surface treatment, not a plain settings list.
 
-## SCREEN INVENTORY (every screen, every state)
+**Legal / Data-sources** — `ScrollView`, big heading, an `accentSoft` callout. LegalView
+opens with "Plain-English summary — the full legal text ships with public launch."
+DataSourcesView carries the **required attributions** (© OpenStreetMap contributors + a
+working `openstreetmap.org/copyright` link [ODbL], NYC Open Data DOHMH, Analyze Boston
+PDDL) and an honesty note: **"Munch's match percentages come from Munch users, never
+scraped ratings."**
 
-The app's flow: **Sign In → Onboarding (Welcome → Cuisines → Anchors → Mode) →
-Main tabs (Swipe deck, Profile)**, with the Match sheet over the deck and Legal /
-Data-sources pages off Profile.
+## 8. MOTION & HAPTICS (half the "modern" feel — specify it)
 
-### 1. Sign In (auth gate)
-Shown only to new users / after sign-out (demo mode skips it; returning users
-auto-sign-in). Centered: "Munch" wordmark (`munchTitle`, accent) · tagline
-**"Stop deciding. Start eating."** (`inkSecondary`) · a large 🍜 (64pt) · the
-**Sign in with Apple** button (Apple's black style, 54pt tall) · legal line
-**"By continuing you agree to our Terms and Privacy Policy."** (caption2).
-States: **idle** · **loading** (button → spinner) · **error** (button returns,
-red `nope` message: "Apple sign-in didn't return a token…", "Couldn't sign in…",
-or "Couldn't complete sign-in…"); a *user-cancelled* sign-in shows **no** error.
+- **Swipe:** drag → live rotation + parallax tilt + stamp fade-in; release past threshold →
+  spring fly-off with slight overshoot; under threshold → spring back. Haptic on commit.
+- **Match:** card spring-scale-in + spark/confetti + success haptic + title kinetic reveal.
+- **Micro-interactions:** every tappable has a pressed state (scale ~0.97 + soft haptic);
+  chip/segment selection springs; counters tick.
+- **Transitions:** springy, physical (not linear fades); onboarding steps slide+settle.
+- **Reduce Motion:** provide a calm fallback (cross-fades, no parallax/confetti) — required.
 
-### 2. Onboarding — chrome
-Linear 4 steps with a top bar (back button + ProgressDots on steps 2–4) and
-right-to-left slide+fade transitions between steps.
+## 9. HARD CONSTRAINTS
 
-**2a. Welcome** — decorative emoji row 🍜 🌮 🍕 · "Munch" (`munchTitle`, accent) ·
-tagline · **"Get started"** PrimaryButton · helper **"About 90 seconds to set up."**
-Single state.
+- **SwiftUI / iOS 26-buildable.** Everything must map to native APIs: `MeshGradient`,
+  Liquid Glass (`.glassEffect` / glass backgrounds), `.sensoryFeedback`,
+  `matchedGeometryEffect`, `PhaseAnimator`/`KeyframeAnimator`, `Canvas`, `TimelineView`,
+  `.symbolEffect`. No effect that can't ship in SwiftUI.
+- **Light AND dark** — design both; dark is first-class this pass.
+- **Accessibility is a gate:** Dynamic Type scales (no fixed type that breaks large sizes),
+  ≥44pt targets, **AA contrast** (verify text over the new vivid gradients/scrims), and the
+  Reduce-Motion fallback above.
+- **Honesty (non-negotiable):** sponsored = visibly "Featured"; never imply Yelp/Google
+  star-rating data — Munch's match % comes only from real user swipes.
+- **Performance:** the deck swipes fast — card art + motion must stay buttery (no heavy
+  blur stacks that drop frames).
+- **Keep the warm-orange DNA** (`#E8552E`) and the token *names*; expansions are additive.
 
-**2b. Cuisines (gate: pick ≥ 5)** — heading **"What do you crave?"**, instruction
-**"Pick at least 5."**, a 2-column grid of SelectableChips (emoji + label), a live
-counter **"{N} of 5 picked"** (turns `accent` when satisfied), and a Continue
-PrimaryButton disabled until 5 are chosen.
+## 10. DELIVERABLES
 
-**2c. Anchors (optional, high-signal)** — heading **"Name a few favorites"**, sub
-**"Restaurants you already love teach Munch your taste. This is the secret sauce."**
-A **Home metro** segmented picker, a pill-shaped search field (magnifier icon,
-1.5pt border, placeholder "Search restaurants"), and a results area. States:
-**idle** (query < 2 chars → nothing) · **loading** (accent spinner) · **results**
-(≤ 8 rows: name semibold, cuisines joined by " · " in caption gray, `plus.circle`
-→ `checkmark.circle.fill` accent when picked; picked rows get `accentSoft` bg +
-accent border) · **no matches** ("No matches — try another spelling."). Picked
-anchors (≤ 5) show as a horizontal chip strip with caption "Picked — tap to
-remove" (or "…that's the max of 5. Tap to remove." at the limit). Footer
-"Optional — but even one helps a lot." + Continue (never blocks).
-
-**2d. Mode** — heading **"How are you eating?"**, three ModeCards (emoji 40pt +
-name `.headline` + caption; selected = `accent` bg/checkmark/title, unselected =
-`surface` bg + `stroke` border; ≥60pt tall pill): 🍽️ **Dine in** "Table for now",
-🥡 **Pickup** "Grab and go", 🛵 **Delivery** "To your door". Submit
-**"Start swiping"**. States: **ready** · **submitting** (spinner) · **error**
-(red "Couldn't save — is the demo server running?").
-
-### 3. Swipe deck (the core screen)
-Top: **"Munch"** wordmark (`display(22)`) + three **ModeTabs** (all-caps Dine In /
-Pickup / Delivery; selected = `accent` fill + white text + accent border 1.5pt;
-unselected = `surface` + `ink` + `stroke` border; `.subheadline.weight(.semibold)`,
-44pt targets). Optional **fallback-location banner** ("Using {metro} center —
-enable location for nearby picks", footnote `inkSecondary`) — honest, never a
-silent fake fix.
-
-**SwipeCardStack:** the top **3** cards visible, staggered (each deeper card
-scaled −0.05 and offset +10pt in Y). The **front card** (`SwipeCardView`):
-- Top **~46%** is `CardArt` (gradient + emoji, above).
-- Body: restaurant **name** (`munchCardName`), a meta row — cuisine, `PriceLabel`,
-  and **distance** (with a `location.fill` glyph) — and the **ReasonChip**.
-- A **"DISCOVER"** badge (`.caption2` bold) marks an exploration card (the
-  algorithm deliberately showing something outside the user's usual taste).
-- Card: `surface`, `radiusCard` (24pt), 1pt `stroke` border, `cardShadow`.
-- **Sponsored cards must show a visible "Featured" label** (design this honestly).
-
-**Swipe gesture & feedback:** drag rotates the card and fades in a stamp —
-**"YES"** (`yes` green) dragging right, **"NOPE"** (`nope` red) dragging left
-(32pt, 3pt stroke, ~12° rotation). Past threshold the card flies off (~600pt) over
-**0.25s**. Two circular **56pt** buttons below mirror the gesture: **Pass**
-(`xmark`, `nope`) and **Like** (`heart.fill`, `yes`), each `surface` + 1.5pt
-`stroke` border, ids `swipe-nope` / `swipe-yes`.
-
-**Deck states:** **loading** (large accent ProgressView, controls hidden — never
-flashes empty) · **error** (StateMessage `wifi.exclamationmark`, "Connection
-trouble", retry "Try again") · **empty—dietary** (`fork.knife`, "Nothing matches
-your filters here", "Try widening your search or relaxing dietary filters.", no
-retry) · **empty—exhausted** (`sparkles`, "That's everyone nearby", "Check back
-soon — or switch modes.", no retry) · **active** (stack + controls).
-
-### 4. Match sheet ("It's a match")
-A modal sheet, presented at most once per session after a qualifying right-swipe.
-Hero: `sparkles` (accent) + **"It's a match"** (`munchTitle`), the matched venue
-as a non-interactive 320pt `SwipeCardView`, and the reason line (`.headline`,
-accent, centered). **Mode-specific CTAs** (each logs a conversion *before*
-opening the outbound link): Dine-In → **"Directions"** (Apple Maps) + **"Call"**
-(if phone known); Pickup → **"Find on DoorDash"**; Delivery → **"Find on
-DoorDash"** + **"Find on Uber Eats"**. Then an **"Also great"** section (up to 2
-non-interactive alternate rows: cuisine emoji, name semibold, "cuisine · distance"
-footnote, `surface` + `stroke`, `radiusControl`) and a **"Keep swiping"**
-SecondaryButton that dismisses. Background `paper`.
-
-### 5. Profile
-`.insetGrouped` List on `paper`, `surface` rows. Sections:
-- **Your taste** — read-only `accentSoft`/`accent` capsule chips (emoji + cuisine)
-  of the user's anchor cuisines; empty → "Pick favorites during onboarding".
-- **Dietary** — 4 SelectableChips (Vegetarian, Vegan, Gluten-free, Halal); tapping
-  toggles optimistically and saves, reverting with an alert on failure. Footer
-  explains coverage is sparse (OSM tags) and to relax filters if decks come up empty.
-- **About** — NavigationLinks: "Privacy Policy", "Terms of Service", "Data sources
-  & attribution".
-- **Account** — "Home metro" (display value or "Not set"); **"Delete my account"**
-  (`.destructive`, `nope`). Delete → confirmation dialog ("This permanently
-  deletes your profile and swipe history." / "Delete everything" / "Cancel") →
-  inline "Deleting your account…" spinner → routes back to onboarding. Errors
-  show a "Something went wrong" alert.
-- **Footnote** — centered ODbL credit link "Munch demo • data © OpenStreetMap
-  contributors". States: **loading** ("Loading your profile…") · **error**
-  (StateMessage `person.crop.circle.badge.exclamationmark`, "Couldn't load your
-  profile", retry) · **loaded**.
-
-### 6. Legal & Data-sources pages
-Both: `ScrollView` on `paper`, `munchHeading` title, `space6` rhythm, inline nav
-title. **LegalView** (Privacy / Terms) opens with an `accentSoft` callout
-**"Plain-English summary — the full legal text ships with public launch."** then
-headed sections. **DataSourcesView** carries the required attributions —
-**© OpenStreetMap contributors** with a working `openstreetmap.org/copyright`
-link (ODbL), NYC Open Data (DOHMH), Analyze Boston (PDDL) — and an `accentSoft`
-honesty note: **"Munch's match percentages come from Munch users, never scraped
-ratings."**
-
----
-
-## DELIVERABLE CHECKLIST (what to hand back)
-
-1. **Refined token sheet** — final palette, type scale, spacing, radii, elevation,
-   and explicit **motion** specs; keep token *names*, justify any value changes.
-2. **Component kit** — each component above, all states, in the refined system.
-3. **Cuisine card-art system** — families, variant logic, glyph/illustration
-   direction; legible behind text, beautiful at a glance, deterministic.
-4. **Every screen** above, all states, in the refined system (light mode).
-5. **App icon** concept replacing the placeholder fork, consistent with the system.
-6. **Accessibility notes** — Dynamic Type behavior, contrast pairs, 44pt targets,
-   and how the "Featured"/sponsored treatment stays honest *and* on-brand.
-
-Keep it warm, editorial, appetite-forward — and buildable in SwiftUI tomorrow.
-
----
-
-## PASS 2 — MODERN / GEN-Z DIRECTION (ACTIVE)
-
-**This section is the live aesthetic. It overrides the editorial framing above wherever
-they conflict.** Pass 1 delivered a gorgeous *print magazine* — cream whitespace, small
-framed elements, a single muted orange, monogram-in-a-circle card art. It's tasteful but
-**static, quiet, and conservative** — it reads "boutique brand book," not "an app an
-18-year-old in Boston wants to open ten times a day." We're not lowering the craft; we're
-**raising the energy**.
-
-### The pivot, in one line
-From *"warm print zine"* → **"vibrant, tactile, kinetic, crave-worthy"** — the warmth and
-honesty stay, but it should feel *alive*: depth, motion, saturated color, and food art that
-makes you hungry. Still unmistakably iOS-native (lean into **iOS 26 Liquid Glass**), never a
-generic delivery app.
-
-### Reference energy (match the *feeling*, don't copy)
-- **Cash App / Spotify (Wrapped) / Partiful** — confident, saturated, high-contrast, bold
-  oversized type, color used fearlessly. Personality over restraint.
-- **iOS 26 Liquid Glass** — frosted, translucent, depth-layered chrome (floating tab bars,
-  glass action buttons, sheets that morph). This is the modern *native* look — use it.
-- **Gopuff / Gorillas / modern food branding** — vivid, appetite-forward, playful.
-- **Duolingo / BeReal** — springy, characterful micro-interactions and reward moments.
-- **Airbnb / Headspace** — depth and warmth done premium, not flat.
-
-### Concrete moves (this is what "elevated" means here)
-
-**1. Card art — the #1 fix. Kill the monogram.**
-A letter in a circle is the single most "unfinished/corporate" tell in Pass 1. Card art is
-the *whole product identity* (real photos ≈ 0%), so each cuisine must look **distinct,
-saturated, and appetizing at a glance.** Replace the monogram seal with a system of:
-- **Rich, layered/mesh gradients** (not flat 2-stop) — more depth, more life, still keyed
-  deterministically per cuisine + venue hash.
-- **A large, expressive custom food illustration / 3D-leaning glyph** per cuisine (steam,
-  noodles, a slice, abstract food forms) — characterful, ownable, NOT raw emoji and NOT a letter.
-- **Subtle grain/texture + a soft light bloom** for tactility.
-- The art should be **immersive and near-full-bleed on the card**, with a gradient scrim so
-  the name/price/reason stay legible. The art dominates; text floats over it.
-
-**2. Swipe deck — make the card the hero.**
-Pass 1's card is small and floats in cream. Go **edge-to-edge, immersive, large** — the card
-should fill the screen with breathing room only at the safe areas. Add **depth** (layered
-shadow, a slight 3D parallax tilt that tracks the drag) and **Liquid-Glass chrome**: the mode
-switch as a floating frosted-glass segmented control, the Pass/Like as **frosted-glass circular
-buttons** that pulse on press. Bigger, bolder **YES / NOPE** stamps that scale + rotate in with
-drag. Springy fly-off with overshoot + a haptic tick.
-
-**3. Match moment — make it a dopamine hit.**
-Right now it's a calm sheet. It's the *reward* — treat it like Spotify Wrapped / a Duolingo
-streak: the matched card **springs up and scales**, a quick **confetti / spark burst** in the
-brand palette, a success haptic, an "It's a match" that's **big and kinetic**, maybe a soft
-gradient bloom behind it. This is the screenshot people share.
-
-**4. Color — expand past the single orange.**
-Keep `accent` `#E8552E` as the hero, but build a **richer, multi-stop gradient system** and
-**per-cuisine accent hues** so the deck feels varied and vivid (not one orange everywhere).
-Strongly consider an optional **dark "night" surface** for drama and contrast — Gen-Z apps lean
-dark, and food pops on dark. Backgrounds shouldn't all be flat paper; use depth and gradient.
-
-**5. Type — keep Fraunces, go bigger and pair it.**
-Fraunces stays for character but **push display sizes much larger and more confident** (hero
-moments, the match). Pair it with a **clean modern geometric/grotesque sans** for UI/labels so
-it reads contemporary, not bookish. Tighten microcopy to be **punchy and playful** ("That's
-everyone nearby" → keep the wit, add attitude).
-
-**6. Motion & haptics — specify them, they're half the feel.**
-Springy, physical transitions everywhere; tactile press states; haptics on swipe-commit,
-match, and selection. The swipe and the match are the **signature moments** — show them
-animated/interactive, not as static specs.
-
-**7. Icon — drop the monogram seal.**
-Go bold, modern, appetizing: a vivid gradient + an **expressive food/spark glyph with depth**,
-consistent with the new card-art language. Should look striking at a glance on a home screen
-next to TikTok and BeReal — not like a corporate monogram.
-
-### Keep (non-negotiable guardrails)
-- **Warm-orange brand DNA** (`#E8552E`) and the overall warmth — we're energizing it, not
-  rebranding away from it.
-- **Honesty:** "Featured"/sponsored cards must stay *visibly* labelled; never imply
-  Yelp/Google-style star ratings — Munch's match % comes only from real user swipes.
-- **SwiftUI / iOS 26-buildable** — Liquid Glass, mesh gradients (`MeshGradient`), springs,
-  `.sensoryFeedback`, and Canvas are all native SwiftUI; stay within what ships.
-- **Accessibility is still a gate:** Dynamic Type, ≥44pt targets, AA contrast (vivid color
-  must not break legibility — check text on the new gradients), and a reduce-motion fallback
-  for the animated moments.
-- **Performance:** the deck swipes fast — card art and motion must stay buttery.
-
-### Output for this pass
-- **2 card-art directions** to choose from: (a) *vibrant evolution* — richer mesh gradients +
-  refined custom glyphs; (b) *bold take* — full-bleed illustrated/3D food art, dark-surface
-  option, maximal energy. Both deterministic + legible behind text.
-- The **Swipe deck (all states)** and the **Match moment**, **device-framed** and showing the
-  **motion** (animated/interactive), since those are the signature moments.
-- A new **app icon** in the bold direction.
-- Keep the spec board for tokens/components, but the screens should look like a **real, modern
-  app**, not a catalog.
+1. **Refined + expanded token sheet** — palette (light + dark), the gradient ramp +
+   per-cuisine hues, type scale (Fraunces + the paired sans), spacing, radii, elevation,
+   and **explicit motion specs**. Keep names; justify changes.
+2. **Card-art system, 2 directions** (vibrant evolution + bold), with the per-cuisine
+   gradient families + custom glyph set, the determinism rule, and legibility scrim.
+3. **Full component kit**, all states, in the refined system (incl. the glass components).
+4. **Every screen, device-framed, all states**, light + dark — leading with the **swipe
+   deck** and the **animated match moment** (show the motion / make it interactive).
+5. **App icon — 2–3 bold concepts** in the new card-art language (no monogram).
+6. **Accessibility + motion notes** — Dynamic Type, contrast pairs, 44pt, Reduce-Motion,
+   and how "Featured" stays honest *and* on-brand.
+7. **The spec board** for tokens/components — but the screens must look like a **real,
+   modern, exciting app**, not a catalog.
