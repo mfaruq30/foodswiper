@@ -86,11 +86,6 @@ actor APIClient {
         )
     }
 
-    private struct AppleLinkBody: Encodable {
-        let authCode: String
-        enum CodingKeys: String, CodingKey { case authCode = "auth_code" }
-    }
-
     // MARK: - Plumbing
 
     /// Empty body marker for GET/DELETE.
@@ -141,4 +136,11 @@ actor APIClient {
             throw APIError.decoding(error)
         }
     }
+}
+
+/// apple-link body. File-scope (not nested in APIClient) so its CodingKeys
+/// snake_case map stays within SwiftLint's type-nesting depth.
+private struct AppleLinkBody: Encodable {
+    let authCode: String
+    enum CodingKeys: String, CodingKey { case authCode = "auth_code" }
 }
