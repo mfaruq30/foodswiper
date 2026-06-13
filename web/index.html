@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Munch — Swipe to discover restaurants</title>
+<style>
+  :root {
+    --paper: #FAF6F0;
+    --ink: #2B2118;
+    --accent: #E8552E;
+    --muted: #6B5E50;
+    --rule: #E4DACB;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+  h1, h2, h3 {
+    font-family: Georgia, "Times New Roman", "Iowan Old Style", serif;
+    line-height: 1.25;
+    color: var(--ink);
+  }
+  h1 { font-size: 2.4rem; margin: 0 0 .5rem; }
+  .tagline { font-size: 1.15rem; color: var(--muted); margin: 0 0 2rem; }
+  a { color: var(--accent); }
+  .dot { color: var(--accent); }
+  .cards { list-style: none; padding: 0; margin: 2rem 0 0; display: grid; gap: 1rem; }
+  .cards li {
+    border: 1px solid var(--rule);
+    border-radius: 12px;
+    background: #fff;
+    background: rgba(255,255,255,.5);
+  }
+  .cards a {
+    display: block;
+    padding: 1rem 1.25rem;
+    text-decoration: none;
+    color: var(--ink);
+  }
+  .cards a:hover { background: rgba(232,85,46,.06); }
+  .cards .label { font-weight: 600; color: var(--accent); }
+  .cards .desc { color: var(--muted); font-size: .95rem; }
+  footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); color: var(--muted); font-size: .85rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Munch<span class="dot">.</span></h1>
+  <p class="tagline">Swipe to discover restaurants you'll actually love — in
+  New York City and Boston.</p>
+
+  <p>Munch is a swipe-based restaurant discovery app. Tell us what you're into,
+  swipe through nearby spots, and tap straight through to directions or
+  ordering. Match percentages come from Munch's own community, not scraped
+  ratings. Munch is a discovery tool — not the restaurant or the delivery
+  service.</p>
+
+  <ul class="cards">
+    <li><a href="privacy.html">
+      <span class="label">Privacy Policy</span><br>
+      <span class="desc">What we collect, why, and your rights.</span>
+    </a></li>
+    <li><a href="terms.html">
+      <span class="label">Terms of Service</span><br>
+      <span class="desc">The rules for using Munch.</span>
+    </a></li>
+    <li><a href="data-sources.html">
+      <span class="label">Data Sources &amp; Attribution</span><br>
+      <span class="desc">OpenStreetMap, NYC Open Data, and Analyze Boston.</span>
+    </a></li>
+    <li><a href="support.html">
+      <span class="label">Support</span><br>
+      <span class="desc">Get help or contact us.</span>
+    </a></li>
+  </ul>
+
+  <footer>
+    &copy; 2026 Munch. Restaurant data &copy; OpenStreetMap contributors and
+    other open sources — see
+    <a href="data-sources.html">Data Sources</a>.
+  </footer>
+</div>
+</body>
+</html>

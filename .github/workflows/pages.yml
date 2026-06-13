@@ -1,0 +1,50 @@
+# Deploys the static legal/support site in web/ to GitHub Pages.
+#
+# ONE-TIME SETUP (must be done once by a repo admin):
+#   GitHub → Settings → Pages → Build and deployment → Source: "GitHub Actions".
+# Without that, this workflow runs but Pages will not publish.
+#
+# The published site lives at https://mfaruq30.github.io/foodswiper/
+# (App Store Connect Privacy Policy URL: .../privacy.html).
+
+name: Deploy Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment; don't cancel an in-progress publish.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact (web/ directory)
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

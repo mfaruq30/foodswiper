@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — Munch</title>
+<style>
+  :root {
+    --paper: #FAF6F0;
+    --ink: #2B2118;
+    --accent: #E8552E;
+    --muted: #6B5E50;
+    --rule: #E4DACB;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.65;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+  h1, h2, h3 { font-family: Georgia, "Times New Roman", "Iowan Old Style", serif; line-height: 1.3; }
+  h1 { font-size: 2.1rem; margin: 0 0 .25rem; }
+  h2 { font-size: 1.35rem; margin: 2.25rem 0 .5rem; border-top: 1px solid var(--rule); padding-top: 1.5rem; }
+  a { color: var(--accent); }
+  .back { display: inline-block; margin-bottom: 1.5rem; text-decoration: none; color: var(--accent); font-weight: 600; }
+  .meta { color: var(--muted); font-size: .9rem; }
+  .note {
+    background: rgba(232,85,46,.08);
+    border-left: 3px solid var(--accent);
+    padding: .75rem 1rem;
+    border-radius: 6px;
+    color: var(--ink);
+    font-size: .92rem;
+    margin: 1rem 0 1.5rem;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .95rem; }
+  th, td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { color: var(--muted); }
+  ul { padding-left: 1.25rem; }
+  li { margin: .35rem 0; }
+  footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); color: var(--muted); font-size: .85rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">&larr; Munch</a>
+  <h1>Privacy Policy</h1>
+  <p class="meta">Last updated: 12 June 2026</p>
+
+  <div class="note"><strong>Template draft</strong> — have a licensed attorney
+  review before public launch.</div>
+
+  <p>Munch is a swipe-based restaurant discovery app for New York City and
+  Boston. This policy explains what we collect, why, who we share it with, how
+  long we keep it, and your rights. Munch is a discovery tool — not a restaurant
+  or a delivery service.</p>
+
+  <h2>1. What we collect</h2>
+  <ul>
+    <li><strong>Account basics</strong> — the name and email shared via Sign in
+    with Apple. With Apple's "Hide My Email," that email is a private Apple
+    relay address.</li>
+    <li><strong>Location</strong> — precise or approximate, used <em>only</em>
+    to find restaurants near you. You can use approximate location or deny
+    access and search by area.</li>
+    <li><strong>Food preferences</strong> — cuisines and dietary tags you set
+    or that we infer.</li>
+    <li><strong>Swipe &amp; conversion history</strong> — which cards you swipe
+    and when you tap an outbound action like "directions" or "order."</li>
+    <li><strong>A user identifier</strong> — a device/auth user id tying your
+    data to your account.</li>
+    <li><strong>Usage analytics</strong> — basic app usage and diagnostics.</li>
+  </ul>
+  <p>We do <strong>not</strong> collect, scrape, or store data from Google
+  Maps/Places, Yelp, or Beli.</p>
+
+  <h2>2. Why we collect it</h2>
+  <table>
+    <tr><th>Data</th><th>Purpose</th></tr>
+    <tr><td>Account basics</td><td>Create and secure your account.</td></tr>
+    <tr><td>Location</td><td>Find nearby restaurants. Used at search time; not sold.</td></tr>
+    <tr><td>Food preferences</td><td>Tailor the cards you see.</td></tr>
+    <tr><td>Swipe &amp; conversion history</td><td><strong>(a)</strong> Personalize your results, and <strong>(b)</strong> train and improve the recommendation model that powers Munch for everyone.</td></tr>
+    <tr><td>User identifier</td><td>Associate your data with your account and sync across sessions.</td></tr>
+    <tr><td>Usage analytics</td><td>Keep the app stable, debug, and improve.</td></tr>
+  </table>
+  <p>To be explicit: <strong>your swipe and conversion history is used to train
+  our recommendation model</strong>, improving results for you and for other
+  users. Match percentages come from Munch's own users — never from scraped
+  third-party ratings.</p>
+
+  <h2>3. Third parties we share with</h2>
+  <ul>
+    <li><strong>Google Firebase</strong> — hosting, database (Firestore),
+    authentication, and the Cloud Run service that runs our recommendation
+    engine.</li>
+    <li><strong>Anthropic</strong> — generates the one-line "reason" on a card.
+    We send only a <strong>compact, non-identifying taste profile</strong> (e.g.
+    top cuisines and a mode). We <strong>never</strong> send your name, email,
+    or account id to Anthropic.</li>
+    <li><strong>Deep-link handoffs</strong> — tapping "directions" or "order"
+    hands you off to <strong>Apple Maps, DoorDash, or Uber Eats</strong>. Once
+    you leave Munch, that app's own privacy policy governs.</li>
+  </ul>
+  <p>We do not sell your personal information and do not share it for
+  cross-context behavioral advertising.</p>
+
+  <h2>4. Restaurant data sources &amp; attribution</h2>
+  <p>Restaurant information comes from open data, not your personal data:
+  <strong>OpenStreetMap</strong> (&copy; OpenStreetMap contributors, ODbL 1.0),
+  <strong>NYC Open Data</strong> (DOHMH inspections), and
+  <strong>Analyze Boston</strong> (food licenses, PDDL). See our
+  <a href="data-sources.html">Data Sources</a> page for full attribution.</p>
+
+  <h2>5. Retention &amp; your right to deletion</h2>
+  <p>We keep your data while your account is active. You can delete it anytime:</p>
+  <ul>
+    <li><strong>In-app deletion</strong> — the in-app "Delete account" option
+    <strong>purges all of your user data</strong> from Munch.</li>
+    <li><strong>Apple token revocation</strong> — because Munch uses Sign in
+    with Apple, deletion also <strong>revokes your Apple token</strong> on
+    Apple's side, as Apple requires (Technical Note TN3194).</li>
+  </ul>
+  <p>Some data may persist briefly in routine backups and age out; we may retain
+  limited records where the law requires.</p>
+
+  <h2>6. Children's privacy / age</h2>
+  <p>Munch is rated <strong>13+</strong> and is <strong>not directed to children
+  under 13</strong>. We do not knowingly collect data from children under 13.</p>
+
+  <h2>7. California rights (CCPA/CPRA)</h2>
+  <p>California residents have the right to know/access, delete, and correct
+  their personal information; to opt out of sale/sharing (Munch does
+  <strong>not</strong> sell or share as defined by the CPRA); to limit use of
+  sensitive personal information (we use precise location only to find nearby
+  restaurants); and to non-discrimination for exercising these rights. Use
+  in-app deletion or contact us; we verify via your authenticated account.</p>
+
+  <h2>8. EEA/UK rights (GDPR)</h2>
+  <p>If you are in the EEA or UK, you have the right to access, rectify, erase,
+  restrict, and port your data, and to object to certain processing. Our legal
+  bases are <strong>contract</strong> (providing the app),
+  <strong>consent</strong> (precise location, withdrawable in device settings),
+  and <strong>legitimate interests</strong> (securing, debugging, improving the
+  app, and training our recommendation model). You may complain to your local
+  data protection authority.</p>
+
+  <h2>9. Contact</h2>
+  <p>Questions or requests: <strong>support@[your-domain].com</strong></p>
+
+  <footer>
+    <a href="index.html">Munch</a> &middot;
+    <a href="terms.html">Terms</a> &middot;
+    <a href="data-sources.html">Data Sources</a> &middot;
+    <a href="support.html">Support</a>
+  </footer>
+</div>
+</body>
+</html>

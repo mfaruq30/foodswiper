@@ -19,6 +19,19 @@
   `MUNCH_BACKEND=memory MUNCH_AUTH=dev VENUES_NDJSON=<path> uvicorn app.main:app`
   — dev auth treats the bearer token as the uid; never enable outside demos.
 
+## Hosted legal site (GitHub Pages)
+
+- **Source:** `web/` (plain HTML, `.nojekyll`), deployed by
+  `.github/workflows/pages.yml` on push to `main` touching `web/**`.
+- **One-time enable:** Settings → Pages → Source: **GitHub Actions** (repo is
+  github.com/mfaruq30/foodswiper). The workflow runs but won't publish until
+  this is set.
+- **URL pattern:** `https://mfaruq30.github.io/foodswiper/`.
+- **App Store Connect Privacy Policy URL:**
+  `https://mfaruq30.github.io/foodswiper/privacy.html`.
+- Other pages: `/terms.html`, `/support.html`, `/data-sources.html` (the ODbL
+  © OpenStreetMap contributors attribution page).
+
 ## Deploy
 
 - **Reco service (Cloud Run):** _Phase 3._ `gcloud run deploy` from

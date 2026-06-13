@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Support — Munch</title>
+<style>
+  :root {
+    --paper: #FAF6F0;
+    --ink: #2B2118;
+    --accent: #E8552E;
+    --muted: #6B5E50;
+    --rule: #E4DACB;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.65;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+  h1, h2 { font-family: Georgia, "Times New Roman", "Iowan Old Style", serif; line-height: 1.3; }
+  h1 { font-size: 2.1rem; margin: 0 0 .5rem; }
+  h2 { font-size: 1.3rem; margin: 2rem 0 .5rem; border-top: 1px solid var(--rule); padding-top: 1.5rem; }
+  a { color: var(--accent); }
+  .back { display: inline-block; margin-bottom: 1.5rem; text-decoration: none; color: var(--accent); font-weight: 600; }
+  .contact {
+    background: rgba(232,85,46,.08);
+    border: 1px solid rgba(232,85,46,.25);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin: 1.25rem 0 2rem;
+    font-size: 1.05rem;
+  }
+  ul { padding-left: 1.25rem; }
+  li { margin: .4rem 0; }
+  footer { margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); color: var(--muted); font-size: .85rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">&larr; Munch</a>
+  <h1>Support</h1>
+  <p>Need help with Munch? We're glad to hear from you.</p>
+
+  <div class="contact">
+    Email us at <strong>support@[your-domain].com</strong> and we'll get back to
+    you as soon as we can.
+  </div>
+
+  <h2>Common questions</h2>
+  <ul>
+    <li><strong>How do I delete my account and data?</strong> Open Munch, go to
+    your account settings, and choose "Delete account." This purges all of your
+    user data and, because Munch uses Sign in with Apple, also revokes your
+    Apple sign-in token.</li>
+    <li><strong>Why does Munch ask for my location?</strong> Only to find
+    restaurants near you. You can use approximate location or search by area
+    instead.</li>
+    <li><strong>Where do restaurant listings come from?</strong> Open data —
+    OpenStreetMap, NYC Open Data, and Analyze Boston. See
+    <a href="data-sources.html">Data Sources</a>.</li>
+    <li><strong>Is Munch the restaurant or the delivery service?</strong> No.
+    Munch is a discovery tool. Orders, directions, pricing, and delivery happen
+    in third-party apps like Apple Maps, DoorDash, or Uber Eats.</li>
+  </ul>
+
+  <h2>Legal</h2>
+  <ul>
+    <li><a href="privacy.html">Privacy Policy</a></li>
+    <li><a href="terms.html">Terms of Service</a></li>
+    <li><a href="data-sources.html">Data Sources &amp; Attribution</a></li>
+  </ul>
+
+  <footer>
+    <a href="index.html">Munch</a> &middot;
+    <a href="privacy.html">Privacy</a> &middot;
+    <a href="terms.html">Terms</a> &middot;
+    <a href="data-sources.html">Data Sources</a>
+  </footer>
+</div>
+</body>
+</html>
