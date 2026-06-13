@@ -11,6 +11,13 @@
 > `ios/Munch/Munch/DesignSystem/Theme.swift`, `Components.swift`, `CardArt.swift`,
 > and the eight feature screens. The placeholder fork app icon (`tools/make_app_icon.py`)
 > is intentionally a stand-in — **producing its replacement is part of this brief.**
+>
+> **⚠️ DIRECTION UPDATE — read [PASS 2](#pass-2--modern-gen-z-direction-active) at the
+> bottom FIRST.** Pass 1 steered "editorial / print zine" and came back beautiful but
+> too quiet and conservative for the actual audience (18–30s). The active aesthetic is
+> now **modern, tactile, kinetic, crave-worthy** — keep the token *names*, the warm-orange
+> DNA, the honesty rules, and SwiftUI/iOS-26 buildability, but **where Pass 2 conflicts
+> with the editorial framing below, Pass 2 wins.**
 
 ---
 
@@ -320,3 +327,101 @@ ratings."**
    and how the "Featured"/sponsored treatment stays honest *and* on-brand.
 
 Keep it warm, editorial, appetite-forward — and buildable in SwiftUI tomorrow.
+
+---
+
+## PASS 2 — MODERN / GEN-Z DIRECTION (ACTIVE)
+
+**This section is the live aesthetic. It overrides the editorial framing above wherever
+they conflict.** Pass 1 delivered a gorgeous *print magazine* — cream whitespace, small
+framed elements, a single muted orange, monogram-in-a-circle card art. It's tasteful but
+**static, quiet, and conservative** — it reads "boutique brand book," not "an app an
+18-year-old in Boston wants to open ten times a day." We're not lowering the craft; we're
+**raising the energy**.
+
+### The pivot, in one line
+From *"warm print zine"* → **"vibrant, tactile, kinetic, crave-worthy"** — the warmth and
+honesty stay, but it should feel *alive*: depth, motion, saturated color, and food art that
+makes you hungry. Still unmistakably iOS-native (lean into **iOS 26 Liquid Glass**), never a
+generic delivery app.
+
+### Reference energy (match the *feeling*, don't copy)
+- **Cash App / Spotify (Wrapped) / Partiful** — confident, saturated, high-contrast, bold
+  oversized type, color used fearlessly. Personality over restraint.
+- **iOS 26 Liquid Glass** — frosted, translucent, depth-layered chrome (floating tab bars,
+  glass action buttons, sheets that morph). This is the modern *native* look — use it.
+- **Gopuff / Gorillas / modern food branding** — vivid, appetite-forward, playful.
+- **Duolingo / BeReal** — springy, characterful micro-interactions and reward moments.
+- **Airbnb / Headspace** — depth and warmth done premium, not flat.
+
+### Concrete moves (this is what "elevated" means here)
+
+**1. Card art — the #1 fix. Kill the monogram.**
+A letter in a circle is the single most "unfinished/corporate" tell in Pass 1. Card art is
+the *whole product identity* (real photos ≈ 0%), so each cuisine must look **distinct,
+saturated, and appetizing at a glance.** Replace the monogram seal with a system of:
+- **Rich, layered/mesh gradients** (not flat 2-stop) — more depth, more life, still keyed
+  deterministically per cuisine + venue hash.
+- **A large, expressive custom food illustration / 3D-leaning glyph** per cuisine (steam,
+  noodles, a slice, abstract food forms) — characterful, ownable, NOT raw emoji and NOT a letter.
+- **Subtle grain/texture + a soft light bloom** for tactility.
+- The art should be **immersive and near-full-bleed on the card**, with a gradient scrim so
+  the name/price/reason stay legible. The art dominates; text floats over it.
+
+**2. Swipe deck — make the card the hero.**
+Pass 1's card is small and floats in cream. Go **edge-to-edge, immersive, large** — the card
+should fill the screen with breathing room only at the safe areas. Add **depth** (layered
+shadow, a slight 3D parallax tilt that tracks the drag) and **Liquid-Glass chrome**: the mode
+switch as a floating frosted-glass segmented control, the Pass/Like as **frosted-glass circular
+buttons** that pulse on press. Bigger, bolder **YES / NOPE** stamps that scale + rotate in with
+drag. Springy fly-off with overshoot + a haptic tick.
+
+**3. Match moment — make it a dopamine hit.**
+Right now it's a calm sheet. It's the *reward* — treat it like Spotify Wrapped / a Duolingo
+streak: the matched card **springs up and scales**, a quick **confetti / spark burst** in the
+brand palette, a success haptic, an "It's a match" that's **big and kinetic**, maybe a soft
+gradient bloom behind it. This is the screenshot people share.
+
+**4. Color — expand past the single orange.**
+Keep `accent` `#E8552E` as the hero, but build a **richer, multi-stop gradient system** and
+**per-cuisine accent hues** so the deck feels varied and vivid (not one orange everywhere).
+Strongly consider an optional **dark "night" surface** for drama and contrast — Gen-Z apps lean
+dark, and food pops on dark. Backgrounds shouldn't all be flat paper; use depth and gradient.
+
+**5. Type — keep Fraunces, go bigger and pair it.**
+Fraunces stays for character but **push display sizes much larger and more confident** (hero
+moments, the match). Pair it with a **clean modern geometric/grotesque sans** for UI/labels so
+it reads contemporary, not bookish. Tighten microcopy to be **punchy and playful** ("That's
+everyone nearby" → keep the wit, add attitude).
+
+**6. Motion & haptics — specify them, they're half the feel.**
+Springy, physical transitions everywhere; tactile press states; haptics on swipe-commit,
+match, and selection. The swipe and the match are the **signature moments** — show them
+animated/interactive, not as static specs.
+
+**7. Icon — drop the monogram seal.**
+Go bold, modern, appetizing: a vivid gradient + an **expressive food/spark glyph with depth**,
+consistent with the new card-art language. Should look striking at a glance on a home screen
+next to TikTok and BeReal — not like a corporate monogram.
+
+### Keep (non-negotiable guardrails)
+- **Warm-orange brand DNA** (`#E8552E`) and the overall warmth — we're energizing it, not
+  rebranding away from it.
+- **Honesty:** "Featured"/sponsored cards must stay *visibly* labelled; never imply
+  Yelp/Google-style star ratings — Munch's match % comes only from real user swipes.
+- **SwiftUI / iOS 26-buildable** — Liquid Glass, mesh gradients (`MeshGradient`), springs,
+  `.sensoryFeedback`, and Canvas are all native SwiftUI; stay within what ships.
+- **Accessibility is still a gate:** Dynamic Type, ≥44pt targets, AA contrast (vivid color
+  must not break legibility — check text on the new gradients), and a reduce-motion fallback
+  for the animated moments.
+- **Performance:** the deck swipes fast — card art and motion must stay buttery.
+
+### Output for this pass
+- **2 card-art directions** to choose from: (a) *vibrant evolution* — richer mesh gradients +
+  refined custom glyphs; (b) *bold take* — full-bleed illustrated/3D food art, dark-surface
+  option, maximal energy. Both deterministic + legible behind text.
+- The **Swipe deck (all states)** and the **Match moment**, **device-framed** and showing the
+  **motion** (animated/interactive), since those are the signature moments.
+- A new **app icon** in the bold direction.
+- Keep the spec board for tokens/components, but the screens should look like a **real, modern
+  app**, not a catalog.
