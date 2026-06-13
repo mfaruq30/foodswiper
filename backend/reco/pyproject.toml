@@ -19,6 +19,8 @@ dependencies = [
 firestore = [
     "google-cloud-firestore>=2.19",
     "firebase-admin>=6.5",
+    # Apple client-secret JWT (ES256) for TN3194 token revocation (D-013).
+    "pyjwt[crypto]>=2.9",
 ]
 # Layer 4 training/serving (D-008). Optional so the $0 memory-mode demo and
 # core serving stay LightGBM-free — the learned ranker activates only when a
@@ -36,6 +38,7 @@ dev = [
     # adapters/training/LLM code and their tests can run in CI verify.
     "google-cloud-firestore>=2.19",
     "firebase-admin>=6.5",
+    "pyjwt[crypto]>=2.9",
     "lightgbm>=4.5",
     "anthropic>=0.40",
 ]

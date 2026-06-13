@@ -120,6 +120,18 @@ class EventLog(Protocol):
     def delete_user_events(self, uid: str) -> None: ...
 
 
+class AppleTokenStore(Protocol):
+    """Per-user Apple refresh tokens, stored server-side for TN3194 revocation
+    on account deletion (D-013). Kept out of the taste profile entirely — a
+    deny-all, server-only collection. Absent in the $0 demo."""
+
+    def set(self, uid: str, refresh_token: str) -> None: ...
+
+    def get(self, uid: str) -> str | None: ...
+
+    def delete(self, uid: str) -> None: ...
+
+
 class ReasonCache(Protocol):
     """Pre-generated LLM reason text, keyed by (restaurant_id, archetype, mode).
 

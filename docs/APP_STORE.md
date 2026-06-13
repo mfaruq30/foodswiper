@@ -101,9 +101,14 @@ Read against the current shipped file. Confirmed:
 declarations match Section 1.
 
 ### Pending item (flag for re-audit) — Sign in with Apple / Firebase Auth SDK
-Sign in with Apple via the **Firebase Auth SDK is not yet integrated** (the only
-auth code today is `DemoAuthProvider.swift`, the dev-auth shim). It is pending a
-decision. **When/if FirebaseAuth is added:**
+Sign in with Apple via the Firebase Auth SDK is now **integrated in code** (Phase
+6): `SignInView`, `AppleNonce`, `FirebaseAuthProvider`, and `FirebaseBootstrap`
+on the client; `apple_auth.py` + the `/v1/auth/apple-link` and account-deletion
+revoke path on the server (both unit-tested). **All FirebaseAuth calls are gated
+behind `#if canImport(FirebaseAuth)`**, so until the SDK is actually linked in
+Xcode and a `GoogleService-Info.plist` is bundled, the app runs `DemoAuthProvider`
+and the default CI build stays Firebase-free. **The re-audit still applies when
+the SDK is linked for the real build:**
 - The Firebase Auth SDK ships its **own** `PrivacyInfo.xcprivacy` (bundled
   inside the SPM product). That manifest is aggregated into the app's privacy
   report at build time.
@@ -111,8 +116,9 @@ decision. **When/if FirebaseAuth is added:**
   privacy report MUST be re-audited and any newly surfaced data type reconciled
   back into Section 1 and the privacy policy (the three-places rule).
 - Sign in with Apple also triggers D-013 obligations (Apple token revocation on
-  account deletion, TN3194) — already designed for, but verify the live path at
-  integration time.
+  account deletion, TN3194) — **now implemented and unit-tested** (`tests/
+  test_apple_auth.py`, `test_api.py`); verify the *live* `/auth/revoke` round-trip
+  against real Apple creds at deploy time.
 
 ---
 
@@ -121,7 +127,7 @@ decision. **When/if FirebaseAuth is added:**
 **Current state — one dependency, no privacy impact.**
 
 - The app target depends on exactly one SwiftPM package: the **local first-party
-  `MunchKit`** package (`ios/Munch/Munch/Packages/MunchKit`, referenced via
+  `MunchKit`** package (`ios/Munch/Packages/MunchKit`, referenced via
   `path:` in `project.yml`).
 - `MunchKit/Package.swift` declares **no external dependencies** — it is pure
   domain logic (scoring helpers, gesture-commit math, domain models), builds and
@@ -226,20 +232,28 @@ Current status of each Phase-6 gate item. Legend: ✅ done · ⛔ blocked-on-use
 - [ ] 🟡 **Runs on iOS 17 simulator + device** — simulator E2E is green via the
       `ios-e2e` lane; on-device run needs the Apple Developer account /
       provisioning (⛔ depends on enrollment).
-- [ ] 🟡 **Sign in with Apple works end-to-end** — not yet wired; only
-      `DemoAuthProvider` (dev auth) exists. Pending the FirebaseAuth/SIWA
-      decision; requires the paid team for the SIWA entitlement (D-003).
-- [ ] 🟡 **Account deletion purges data (+ Apple token revoke, D-013)** — delete
-      flow exists in the demo (Profile → Delete my account); the Apple
-      `/auth/revoke` call lands with real SIWA, so end-to-end is pending SIWA.
+- [x] ✅ **Sign in with Apple wired (engineering)** — full client flow
+      (`SignInView` → `AppleNonce` → `FirebaseAuthProvider` → `apple-link`) and
+      server exchange are written; FirebaseAuth calls gated by
+      `#if canImport(FirebaseAuth)`. ⛔ **Live end-to-end** still needs the user
+      to: register the bundle id + SIWA capability in the Apple account, enable
+      the Apple provider in the Firebase console, and bundle
+      `GoogleService-Info.plist` + link the FirebaseAuth SPM product (see
+      `docs/RELEASE.md`).
+- [x] ✅ **Account deletion purges data (+ Apple token revoke, D-013)** —
+      `DELETE /v1/account` purges events → revokes the stored Apple refresh token
+      at `/auth/revoke` → drops it → deletes the profile + Firebase user.
+      Unit-tested end-to-end with a fake Apple client (`test_api.py`). ⛔ Live
+      `/auth/revoke` round-trip pending real Apple `.p8`/team/service secrets.
 - [x] ✅ **`PrivacyInfo.xcprivacy` valid + consistent** — audited (Section 2);
       consistent with App Privacy answers and the privacy policy.
 - [x] ✅ **SPM deps audited** — only first-party `MunchKit`, no manifest needed
       (Section 3). Re-audit gate flagged for FirebaseAuth if added.
-- [ ] 🟡 **App icon (all sizes) + launch screen + screenshots** — launch screen
-      configured (`UILaunchScreen` in `project.yml`); **no `.xcassets`/AppIcon
-      asset set exists yet**, and screenshots are planned but not captured
-      (Section 6). ⛔ needs the icon artwork from the user.
+- [x] ✅ **App icon + launch screen** — launch screen configured (`UILaunchScreen`
+      in `project.yml`); a TestFlight-valid 1024² `AppIcon` now ships in
+      `Resources/Assets.xcassets`, generated reproducibly by
+      `tools/make_app_icon.py` (cream fork on brand coral). **Final art is the
+      Phase 8 design deliverable.** Screenshots still planned/uncaptured (Section 6).
 - [x] ✅ **Legal docs reachable in-app + hosted** — `legal/privacy-policy.md`,
       `terms-of-service.md`, `eula.md` exist; reachable from the Profile tab
       (Privacy/Terms/Data sources) and hosted via `web/` (D-016 GitHub Pages).
@@ -263,10 +277,13 @@ Current status of each Phase-6 gate item. Legend: ✅ done · ⛔ blocked-on-use
 
 ### Blocked-on-user vs done — quick read
 - **Done (✅):** privacy manifest audit, SPM audit, legal docs present, RUNBOOK,
-  review notes drafted, eval posture (heuristic champion is the intended v1 state).
-- **Blocked on user (⛔):** Apple Developer enrollment / signing team, on-device
-  run, SIWA entitlement, app icon artwork, Firebase/Cloud Run production deploy +
-  secrets, confirming hosted legal URLs resolve.
-- **Pending engineering (🟡):** wire Sign in with Apple (+ live account-deletion
-  revoke), archive config, capture screenshots, confirm `make verify` green on
-  the release commit.
+  review notes drafted, eval posture (heuristic champion is the intended v1
+  state), **SIWA + account-deletion revoke wired and unit-tested**, **app icon
+  (placeholder, Phase-8 final pending)**.
+- **Blocked on user (⛔):** Apple Developer signing team + on-device run, bundle-id
+  + SIWA capability registration in the Apple account, Apple provider in the
+  Firebase console, `GoogleService-Info.plist` + FirebaseAuth SPM link, real Apple
+  `.p8`/team/service secrets for the live revoke, Firebase/Cloud Run production
+  deploy + secrets, confirming hosted legal URLs resolve. (Steps: `docs/RELEASE.md`.)
+- **Pending engineering (🟡):** archive/signing config, capture screenshots,
+  confirm `verify` green on the release commit.

@@ -77,6 +77,20 @@ actor APIClient {
         try await send("DELETE", "v1/account", body: Empty?.none, expecting: StatusReply.self)
     }
 
+    /// Hand the server the Apple authorization code so it can store a refresh
+    /// token for TN3194 revocation at deletion (D-013). Called once at sign-in.
+    func linkApple(authCode: String) async throws {
+        try await send(
+            "POST", "v1/auth/apple-link",
+            body: AppleLinkBody(authCode: authCode), expecting: StatusReply.self
+        )
+    }
+
+    private struct AppleLinkBody: Encodable {
+        let authCode: String
+        enum CodingKeys: String, CodingKey { case authCode = "auth_code" }
+    }
+
     // MARK: - Plumbing
 
     /// Empty body marker for GET/DELETE.

@@ -53,8 +53,12 @@ never holds a real value).
   revoke old. The app must keep working with the key absent (templated reasons).
 - **Supabase service-role key:** GitHub Actions secret for the re-sync
   workflow only. Never in client code.
-- **Apple SIWA .p8 key:** Supabase edge-function secret, used by
-  `delete-account` for TN3194 token revocation (D-013).
+- **Apple SIWA .p8 key + team/key/service ids:** reco-service env, read by
+  `apple_auth.py` to mint the ES256 client secret and revoke the user's refresh
+  token on account deletion (TN3194, D-013). Set the four `APPLE_*` vars in
+  Cloud Run (provide the .p8 via `APPLE_PRIVATE_KEY` from Secret Manager, or
+  `APPLE_PRIVATE_KEY_PATH`). All absent = no revoke, deletion still purges data.
+  Full setup + rotation: `docs/RELEASE.md`.
 
 ## Seed / re-sync a city
 

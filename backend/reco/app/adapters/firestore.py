@@ -208,7 +208,11 @@ class FirestoreEventLog:
 def build_firestore_backend(
     project_id: str,
 ) -> tuple[
-    FirestoreVenueRepository, FirestoreProfileStore, FirestoreEventLog, FirestoreReasonCache
+    FirestoreVenueRepository,
+    FirestoreProfileStore,
+    FirestoreEventLog,
+    FirestoreReasonCache,
+    FirestoreAppleTokenStore,
 ]:
     """Construct the production adapter set — the ONLY place a Firestore
     client is built, so the composition root (main) never imports
@@ -221,6 +225,7 @@ def build_firestore_backend(
         FirestoreProfileStore(client),
         FirestoreEventLog(client),
         FirestoreReasonCache(client),
+        FirestoreAppleTokenStore(client),
     )
 
 
@@ -259,6 +264,28 @@ class FirestoreReasonCache:
                 if reason:
                     out[by_doc[snap.id]] = str(reason)
         return out
+
+
+class FirestoreAppleTokenStore:
+    """AppleTokenStore over apple_tokens/{uid} — a server-only collection (the
+    deny-all rules keep it off every client). Holds the refresh token revoked
+    at deletion (D-013/TN3194)."""
+
+    def __init__(self, client: firestore.Client) -> None:
+        self._db = client
+
+    def set(self, uid: str, refresh_token: str) -> None:
+        self._db.collection("apple_tokens").document(uid).set({"refresh_token": refresh_token})
+
+    def get(self, uid: str) -> str | None:
+        snap = _get_sync(self._db.collection("apple_tokens").document(uid))
+        if not snap.exists:
+            return None
+        token = (snap.to_dict() or {}).get("refresh_token")
+        return str(token) if token else None
+
+    def delete(self, uid: str) -> None:
+        self._db.collection("apple_tokens").document(uid).delete()
 
 
 class FirebaseTokenVerifier:

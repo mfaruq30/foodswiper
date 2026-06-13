@@ -103,6 +103,22 @@ class InMemoryProfileStore:
         self._profiles.pop(uid, None)
 
 
+class InMemoryAppleTokenStore:
+    """AppleTokenStore over a dict — tests + the demo (where it stays empty)."""
+
+    def __init__(self) -> None:
+        self._tokens: dict[str, str] = {}
+
+    def set(self, uid: str, refresh_token: str) -> None:
+        self._tokens[uid] = refresh_token
+
+    def get(self, uid: str) -> str | None:
+        return self._tokens.get(uid)
+
+    def delete(self, uid: str) -> None:
+        self._tokens.pop(uid, None)
+
+
 class InMemoryReasonCache:
     """ReasonCache over a dict; empty by default — the $0 demo path where
     every card keeps its templated reason. Tests pre-seed it to exercise the

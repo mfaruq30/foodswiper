@@ -31,6 +31,11 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
+      # No SPM cache step yet: the only package is the local first-party MunchKit
+      # (no network resolution). FUTURE(release): when FirebaseAuth is linked for
+      # the signed archive (docs/RELEASE.md §2), add actions/cache keyed on
+      # Package.resolved to avoid re-resolving the Firebase SDK every run.
+
       - name: Run MunchKit unit tests
         run: swift test --package-path ios/Munch/Packages/MunchKit
 

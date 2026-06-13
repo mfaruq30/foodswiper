@@ -241,6 +241,86 @@ def test_search_is_prefix_only_like_production() -> None:
     assert client.get("/v1/search", params={"metro": "mars", "q": "x"}).status_code == 422
 
 
+def _apple_app(tokens: object, apple_auth: object) -> TestClient:
+    class FakeDeleter:
+        def delete_user(self, uid: str) -> None:
+            pass
+
+    app = create_app(
+        venues=InMemoryVenueRepository([_venue("v1", "Lucali", "pizza")]),
+        profiles=InMemoryProfileStore(),
+        events=InMemoryEventLog(),
+        verifier=DevTokenVerifier(),
+        account_deleter=FakeDeleter(),
+        apple_auth=apple_auth,  # type: ignore[arg-type]
+        apple_tokens=tokens,  # type: ignore[arg-type]
+    )
+    client = TestClient(app)
+    client.headers["authorization"] = "Bearer test-user"
+    return client
+
+
+def test_apple_link_stores_token_and_deletion_revokes_it() -> None:
+    # TN3194 (D-013): apple-link exchanges the code for a refresh token the
+    # server stores; account deletion revokes it at Apple BEFORE forgetting it.
+    from app.adapters.memory import InMemoryAppleTokenStore
+
+    tokens = InMemoryAppleTokenStore()
+    revoked: list[str] = []
+    token_present_at_revoke: list[bool] = []
+
+    class FakeAppleAuth:
+        def exchange_code_for_refresh_token(self, auth_code: str) -> str | None:
+            return f"refresh-for-{auth_code}"
+
+        def revoke(self, refresh_token: str) -> bool:
+            revoked.append(refresh_token)
+            # Read the live store AT revoke time: if deletion ever reordered to
+            # drop-then-revoke, the token would already be gone here. This is
+            # what actually pins the ordering (end-state checks can't).
+            token_present_at_revoke.append(tokens.get("test-user") == refresh_token)
+            return True
+
+    client = _apple_app(tokens, FakeAppleAuth())
+
+    assert client.post("/v1/auth/apple-link", json={"auth_code": "abc"}).status_code == 201
+    assert tokens.get("test-user") == "refresh-for-abc"
+
+    assert client.delete("/v1/account").status_code == 200
+    assert revoked == ["refresh-for-abc"]
+    assert token_present_at_revoke == [
+        True
+    ]  # token still stored when revoked => revoke-before-drop
+    assert tokens.get("test-user") is None  # and dropped afterward
+
+
+def test_apple_link_succeeds_but_stores_nothing_when_exchange_fails() -> None:
+    # Apple rejected the single-use code (or we were offline): exchange returns
+    # None. Sign-in must NOT break — the endpoint still 201s and simply stores
+    # no token (nothing to revoke later). This is the "don't break the seam" path.
+    from app.adapters.memory import InMemoryAppleTokenStore
+
+    class FailingAppleAuth:
+        def exchange_code_for_refresh_token(self, auth_code: str) -> str | None:
+            return None
+
+        def revoke(self, refresh_token: str) -> bool:  # pragma: no cover - unused here
+            return True
+
+    tokens = InMemoryAppleTokenStore()
+    client = _apple_app(tokens, FailingAppleAuth())
+
+    assert client.post("/v1/auth/apple-link", json={"auth_code": "abc"}).status_code == 201
+    assert tokens.get("test-user") is None  # nothing stored
+
+
+def test_apple_link_is_noop_without_apple_config() -> None:
+    # The $0 demo: no apple_auth wired => the endpoint succeeds and does nothing
+    # (Sign in with Apple still works; there's just no token to revoke later).
+    client, _, _ = _client()
+    assert client.post("/v1/auth/apple-link", json={"auth_code": "abc"}).status_code == 201
+
+
 def test_account_deletion_purges_everything_including_auth() -> None:
     deleted_uids: list[str] = []
 

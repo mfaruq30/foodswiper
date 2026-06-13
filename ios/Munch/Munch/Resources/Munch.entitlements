@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Sign in with Apple capability (spec §8.5, Apple guideline 4.8). Required
+  because Munch offers Sign in with Apple as its login. Enforced only at
+  signing; unsigned CI builds (CODE_SIGNING_ALLOWED=NO) ignore it, so the $0
+  demo and the ios-e2e gate are unaffected.
+-->
+<plist version="1.0">
+<dict>
+    <key>com.apple.developer.applesignin</key>
+    <array>
+        <string>Default</string>
+    </array>
+</dict>
+</plist>

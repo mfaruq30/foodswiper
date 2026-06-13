@@ -2,6 +2,10 @@
 .env
 .env.*
 !.env.example
+# Apple Sign-in private key. APPLE_PRIVATE_KEY_PATH can point the .p8 at a local
+# file; this belt-and-suspenders glob stops it ever being committed. Production
+# loads it from Secret Manager, never the repo (docs/RELEASE.md §4).
+*.p8
 
 # Python
 .venv/
@@ -23,6 +27,12 @@ dist/
 .swiftpm/
 DerivedData/
 xcuserdata/
+
+# Firebase client config. Not a hard secret (it's protected by Security Rules),
+# but kept out of the repo so the DEFAULT build stays Firebase-free — the demo
+# / CI run on DemoAuthProvider, and only a real release build (where the user
+# drops this into Munch/Resources/) links FirebaseAuth. See docs/RELEASE.md.
+GoogleService-Info.plist
 
 # Supabase local stack
 backend/supabase/.temp/

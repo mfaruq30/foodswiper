@@ -18,13 +18,15 @@ struct MunchApp: App {
     }
 }
 
-/// Routes between onboarding and the main app — the only place that decides
-/// "which world is the user in".
+/// Routes between sign-in, onboarding, and the main app — the only place that
+/// decides "which world is the user in".
 struct RootCoordinatorView: View {
     @Environment(AppContainer.self) private var container
 
     var body: some View {
-        if container.homeMetro == nil {
+        if !container.isSignedIn {
+            SignInView()
+        } else if container.homeMetro == nil {
             OnboardingFlowView()
         } else {
             MainTabView()

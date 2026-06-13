@@ -989,6 +989,7 @@ dev = [
     { name = "httpx" },
     { name = "lightgbm" },
     { name = "mypy" },
+    { name = "pyjwt", extra = ["crypto"] },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
@@ -996,6 +997,7 @@ dev = [
 firestore = [
     { name = "firebase-admin" },
     { name = "google-cloud-firestore" },
+    { name = "pyjwt", extra = ["crypto"] },
 ]
 llm = [
     { name = "anthropic" },
@@ -1018,6 +1020,8 @@ requires-dist = [
     { name = "lightgbm", marker = "extra == 'ml'", specifier = ">=4.5" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.13" },
     { name = "pydantic", specifier = ">=2.7" },
+    { name = "pyjwt", extras = ["crypto"], marker = "extra == 'dev'", specifier = ">=2.9" },
+    { name = "pyjwt", extras = ["crypto"], marker = "extra == 'firestore'", specifier = ">=2.9" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.3" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=6.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.8" },

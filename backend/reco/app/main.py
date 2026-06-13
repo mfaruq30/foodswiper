@@ -18,6 +18,7 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel, Field, field_validator
 
+from .apple_auth import AppleAuthClient
 from .archetype import archetype_key
 from .auth import DevTokenVerifier, require_uid
 from .deck import DeckCard, assemble_deck
@@ -26,6 +27,7 @@ from .geo import haversine_m
 from .models import Mode, RequestContext, UserProfile
 from .ports import (
     AccountDeleter,
+    AppleTokenStore,
     ConversionEvent,
     EventLog,
     FeedbackEvent,
@@ -151,6 +153,10 @@ class SearchResult(BaseModel):
     cuisines: list[str]
 
 
+class AppleLinkBody(BaseModel):
+    auth_code: str = Field(min_length=1, max_length=2000)
+
+
 # Cap on the rolling right-swipe cuisine list that drives swipe_pattern_match;
 # beyond ~10 the recency decay (0.85^i) makes older entries negligible anyway.
 _RECENT_CUISINES_CAP = 10
@@ -192,6 +198,8 @@ def create_app(
     verifier: TokenVerifier,
     account_deleter: AccountDeleter | None = None,
     reason_cache: ReasonCache | None = None,
+    apple_auth: AppleAuthClient | None = None,
+    apple_tokens: AppleTokenStore | None = None,
     rng: random.Random | None = None,
 ) -> FastAPI:
     """Build the API with injected ports — production, demo, and tests all
@@ -370,12 +378,28 @@ def create_app(
         results = venues.search_by_name(metro, q, min(max(limit, 1), 25))
         return [SearchResult(restaurant_id=r.id, name=r.name, cuisines=r.cuisines) for r in results]
 
+    @app.post("/v1/auth/apple-link", status_code=201)
+    def apple_link(body: AppleLinkBody, uid: str = Depends(require_uid)) -> dict[str, str]:
+        # TN3194 (D-013): trade the single-use Apple code for a refresh token we
+        # can revoke at deletion. No-op in the demo (no Apple creds configured),
+        # so sign-in works there without any of this.
+        if apple_auth is not None and apple_tokens is not None:
+            refresh = apple_auth.exchange_code_for_refresh_token(body.auth_code)
+            if refresh:
+                apple_tokens.set(uid, refresh)
+        return {"status": "ok"}
+
     @app.delete("/v1/account")
     def delete_account(uid: str = Depends(require_uid)) -> dict[str, str]:
-        # Full purge (D-013): events first, then profile, then the auth
-        # provider's account record. FUTURE(Phase 6): Apple SIWA token
-        # revocation (TN3194) goes here, BEFORE the auth-account deletion.
+        # Full purge (D-013): events, then the Apple token (revoked at Apple
+        # BEFORE we forget it — TN3194), then profile, then the auth-provider
+        # account record.
         events.delete_user_events(uid)
+        if apple_auth is not None and apple_tokens is not None:
+            token = apple_tokens.get(uid)
+            if token:
+                apple_auth.revoke(token)
+            apple_tokens.delete(uid)
         profiles.delete(uid)
         if account_deleter is not None:
             account_deleter.delete_user(uid)
@@ -425,13 +449,16 @@ def _build_production_app() -> FastAPI:
         )
 
     from .adapters.firestore import build_firestore_backend
+    from .apple_auth import build_from_env
 
-    venues, profiles, events, reason_cache = build_firestore_backend(project_id)
+    venues, profiles, events, reason_cache, apple_tokens = build_firestore_backend(project_id)
     return create_app(
         venues=venues,
         profiles=profiles,
         events=events,
         reason_cache=reason_cache,
+        apple_auth=build_from_env(),
+        apple_tokens=apple_tokens,
         verifier=verifier,
         account_deleter=account_deleter,
     )
